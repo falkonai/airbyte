@@ -17,6 +17,12 @@
         "null"
       ]
     },
+    "sfdcId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "sfdcLeadId": {
       "type": [
         "string",
@@ -24,6 +30,12 @@
       ]
     },
     "sfdcLeadOwnerId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "sfdcType": {
       "type": [
         "string",
         "null"
