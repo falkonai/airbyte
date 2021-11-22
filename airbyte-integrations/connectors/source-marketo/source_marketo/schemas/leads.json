@@ -11,12 +11,6 @@
         "null"
       ]
     },
-    "site": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
     "billingStreet": {
       "type": [
         "string",
