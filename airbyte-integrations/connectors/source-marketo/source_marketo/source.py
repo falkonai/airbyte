@@ -55,6 +55,12 @@ class MarketoStream(HttpStream, ABC):
         return params
 
     def parse_response(self, response: requests.Response, stream_state: Mapping[str, Any], **kwargs) -> Iterable[Mapping]:
+        # if we get record-level errors like "1029, Export daily quota exceeded" we signaling about that in log
+        errors_data = response.json().get("errors")
+        if errors_data:
+            for error_data in errors_data:
+                self.logger.error(f"{error_data.get('code')}, {error_data.get('message')}")
+
         data = response.json().get(self.data_field, [])
 
         for record in data:
@@ -133,9 +139,6 @@ class MarketoExportBase(IncrementalMarketoStream):
     # The status is only updated once every 60 seconds
     poll_interval = 60
 
-    def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
-        return None
-
     @property
     def stream_fields(self):
         return {}
@@ -143,6 +146,9 @@ class MarketoExportBase(IncrementalMarketoStream):
     @property
     def stream_filter(self):
         return {}
+
+    def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
+        return None
 
     def create_export(self, param):
         return next(MarketoExportCreate(self.config, stream_name=self.stream_name, param=param).read_records(sync_mode=None), {})
@@ -163,14 +169,19 @@ class MarketoExportBase(IncrementalMarketoStream):
     def stream_slices(self, sync_mode, stream_state: Mapping[str, Any] = None, **kwargs) -> Iterable[Optional[Mapping[str, any]]]:
         date_slices = super().stream_slices(sync_mode, stream_state, **kwargs)
 
-        for date_slice in date_slices:
+        for i, date_slice in enumerate(date_slices):
             param = {"fields": [], "filter": {"createdAt": date_slice}}
             param["fields"].extend(self.stream_fields)
             param["filter"].update(self.stream_filter)
 
             export = self.create_export(param)
 
-            date_slice["id"] = export["exportId"]
+            if not export:
+                date_slices = date_slices[:i]
+                break
+
+            date_slice["id"] = export.get("exportId")
+
         return date_slices
 
     def sleep_till_export_completed(self, stream_slice: Mapping[str, Any]) -> bool:
@@ -210,7 +221,7 @@ class MarketoExportBase(IncrementalMarketoStream):
 
         for values in list_response[1:]:
             record = {
-                headers[i]: format_value(value, schema[headers[i]])
+                headers[i]: format_value(value, schema[headers[i]], headers[i])
                 for i, value in enumerate(next(csv.reader([values], skipinitialspace=True)))
             }
 
@@ -507,6 +518,9 @@ class SourceMarketo(AbstractSource):
             return False, e
 
     def streams(self, config: Mapping[str, Any]) -> List[Stream]:
+        if "window_in_days" not in config:
+            config["window_in_days"] = 30  # Set date range to maximum (30 days)
+
         config["authenticator"] = MarketoAuthenticator(config)
 
         streams = [ActivityTypes(config), Campaigns(config), Leads(config), Lists(config), Programs(config)]

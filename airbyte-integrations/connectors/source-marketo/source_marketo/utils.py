@@ -4,6 +4,7 @@
 
 
 from datetime import datetime
+from airbyte_cdk.logger import AirbyteLogger
 
 STRING_TYPES = [
     "string",
@@ -43,30 +44,31 @@ def clean_string(string: str) -> str:
     return "".join("_" + c.lower() if c.isupper() else c for c in string if c != " ").strip("_")
 
 
-def format_value(value, schema):
-    if not isinstance(schema["type"], list):
-        field_type = [schema["type"]]
-    else:
-        field_type = schema["type"]
+def format_value(value, schema, field_name=None):
+    """Need use try...except construction for condition
+    when we get unexpected type from API"""
 
-    if value in [None, "", "null"]:
-        return None
-    elif "integer" in field_type:
-        if isinstance(value, int):
-            return value
+    try:
+        if not isinstance(schema["type"], list):
+            field_type = [schema["type"]]
+        else:
+            field_type = schema["type"]
 
-        # Custom Marketo percent type fields can have decimals, so we drop them
-        decimal_index = value.find(".")
-        if decimal_index > 0:
-            value = value[:decimal_index]
-        return int(value)
-    elif "string" in field_type:
-        return str(value)
-    elif "number" in field_type:
-        return float(value)
-    elif "boolean" in field_type:
-        if isinstance(value, bool):
-            return value
-        return value.lower() == "true"
+        if value in [None, "", "null"]:
+            return None
+        elif "integer" in field_type:
+            return int(value)
+        elif "string" in field_type:
+            return str(value)
+        elif "number" in field_type:
+            return float(value)
+        elif "boolean" in field_type:
+            if isinstance(value, bool):
+                return value
+            return value.lower() == "true"
 
-    return value
+        return value
+    except ValueError:
+        AirbyteLogger().info(f"Could not indicate data type of field {field_name} for {value} with {field_type}."
+                             "Field value set to string data type.")
+        return value
