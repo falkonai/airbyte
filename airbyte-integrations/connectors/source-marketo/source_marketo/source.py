@@ -447,6 +447,12 @@ class Programs(IncrementalMarketoStream):
     def parse_response(self, response: requests.Response, stream_state: Mapping[str, Any], **kwargs) -> Iterable[Mapping]:
         for record in super().parse_response(response, stream_state, **kwargs):
             record["updatedAt"] = record["updatedAt"][:-5]  # delete +00:00 part from the end of updatedAt
+
+            # Remove non parser-friendly suffix from createdAt
+            created_at = record.get("createdAt", "")
+            if created_at[-5:] == "+0000":
+                record["createdAt"] = created_at[:-5]
+
             yield record
 
 
