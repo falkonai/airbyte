@@ -17,12 +17,6 @@
         "null"
       ]
     },
-    "sfdcId": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
     "sfdcLeadId": {
       "type": [
         "string",
@@ -47,30 +41,6 @@
         "null"
       ]
     },
-    "website": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "mainPhone": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "sicCode": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "externalCompanyId": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
     "id": {
       "type": [
         "string",
@@ -78,43 +48,21 @@
         "null"
       ]
     },
-    "mktoName": {
+    "firstName": {
       "type": [
         "string",
         "null"
       ]
     },
-    "personType": {
+    "lastName": {
       "type": [
         "string",
         "null"
       ]
     },
-    "mktoIsPartner": {
+    "email": {
       "type": [
         "string",
-        "boolean",
-        "null"
-      ]
-    },
-    "isLead": {
-      "type": [
-        "string",
-        "boolean",
-        "null"
-      ]
-    },
-    "mktoIsCustomer": {
-      "type": [
-        "string",
-        "boolean",
-        "null"
-      ]
-    },
-    "isAnonymous": {
-      "type": [
-        "string",
-        "boolean",
         "null"
       ]
     },
