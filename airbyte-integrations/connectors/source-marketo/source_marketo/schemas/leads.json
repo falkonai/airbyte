@@ -5,9 +5,6 @@
     "company": {
       "type": ["string", "null"]
     },
-    "site": {
-      "type": ["string", "null"]
-    },
     "billingStreet": {
       "type": ["string", "null"]
     },
