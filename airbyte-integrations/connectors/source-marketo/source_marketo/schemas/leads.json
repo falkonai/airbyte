@@ -2,6 +2,21 @@
   "type": ["object", "null"],
   "additionalProperties": false,
   "properties": {
+    "sfdcAccountId": {
+      "type": ["string", "null"]
+    },
+    "sfdcContactId": {
+      "type": ["string", "null"]
+    },
+    "sfdcLeadId": {
+      "type": ["string", "null"]
+    },
+    "sfdcLeadOwnerId": {
+      "type": ["string", "null"]
+    },
+    "sfdcType": {
+      "type": ["string", "null"]
+    },
     "company": {
       "type": ["string", "null"]
     },
