@@ -24,6 +24,7 @@ from .utils import STRING_TYPES, clean_string, format_value, to_datetime_str
 class MarketoStream(HttpStream, ABC):
     primary_key = "id"
     data_field = "result"
+    error_field = "errors"
     page_size = 300
 
     def __init__(self, config: Mapping[str, Any], stream_name: str = None, param: Mapping[str, Any] = None, export_id: int = None):
@@ -56,6 +57,12 @@ class MarketoStream(HttpStream, ABC):
         return params
 
     def parse_response(self, response: requests.Response, stream_state: Mapping[str, Any], **kwargs) -> Iterable[Mapping]:
+        response_json = response.json()
+        if response_json.get('success') == False:
+            errors = response_json.get(self.error_field, [])
+            for error in errors:
+                self.logger.error(f"[MarketoStream] response error: {error}")
+
         data = response.json().get(self.data_field, [])
 
         for record in data:
