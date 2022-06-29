@@ -60,6 +60,7 @@ class MarketoStream(HttpStream, ABC):
         response_json = response.json()
         if response_json.get('success') == False:
             errors = response_json.get(self.error_field, [])
+            self.logger.error(f"[MarketoStream] response indicates a FAILURE with {len(errors)} error(s)")
             for error in errors:
                 self.logger.error(f"[MarketoStream] response error: {error}")
 
