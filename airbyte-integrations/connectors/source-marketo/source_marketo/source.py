@@ -8,7 +8,7 @@ import io
 import json
 from abc import ABC
 from time import sleep
-from typing import Any, Iterable, List, Mapping, MutableMapping, Optional, Tuple
+from typing import Any, Iterable, List, Mapping, MutableMapping, Optional, Set, Tuple
 
 import pendulum
 import requests
@@ -328,13 +328,61 @@ class Leads(MarketoExportBase):
 
     cursor_field = "updatedAt"
 
-    def __init__(self, config: Mapping[str, Any]):
+    def __init__(self, config: Mapping[str, Any], ):
         super().__init__(config, self.name)
 
     @property
     def stream_fields(self):
-        return list(self.get_json_schema()["properties"].keys())
+        leads_schema_fields = list(self.get_json_schema()["properties"].keys())
+        available_lead_fields = self.describe_leads_fields()
+        if available_lead_fields is not None:
+            return [
+                schema_field
+                for schema_field in leads_schema_fields
+                if schema_field in available_lead_fields
+            ]
+        else:
+            return list(self.get_json_schema()["properties"].keys())
 
+
+    def describe_leads_fields(self) -> Optional[Set[str]]:
+        """
+        Determine what fields are actually available on the Lead Object.
+        """
+        domain_url = self.config.get('domain_url', None)
+        authenticator = self.config.get('authenticator', None)
+        if domain_url is None or authenticator is None:
+            self.logger.warning(f"[Leads](describe_leads_fields) Not possible - need both 'domain_url' and 'authenticator' to be configured")
+            return None
+
+        try:
+            url = f"{self.config['domain_url']}/rest/v1/leads/describe2.json"
+            response = requests.get(url, headers=authenticator.get_auth_header())
+            response.raise_for_status()
+            response_json = response.json()
+
+            is_success = response_json.get('success', False)
+            if is_success:
+                result = response_json.get('result', [])
+                if len(result) == 0:
+                    return set()
+
+                result_item = result[0]
+                return set([
+                    field_desc['name']
+                    for field_desc in result_item.get('fields', [])
+                    if field_desc.get('name', None) is not None
+                ])
+            else:
+                errors = response_json.get('errors', [])
+                self.logger.warning(f"[Leads](describe_leads_fields) Got a nonsuccessful response, with {len(errors)} error(s)")
+                for error in errors:
+                    self.logger.warning(f"[Leads](describe_leads_fields) Nonsuccess response error: {error}")
+
+                return None
+        except requests.exceptions.RequestException as e:
+            self.logger.warning(f"[Leads](describe_leads_fields) Got a request error: {e}")
+            return None
 
 class Activities(MarketoExportBase):
     """
