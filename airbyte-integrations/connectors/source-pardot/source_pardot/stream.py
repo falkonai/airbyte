@@ -107,8 +107,9 @@ class VisitorPageViews(PardotIdReplicationStream):
     object_name = "visitor-page-views"
 
 
-# PardotUpdatedAtReplicationStreams
-class PardotUpdatedAtReplicationStream(PardotStream):
+# PardotIncrementalReplicationStream
+class PardotIncrementalReplicationStream(PardotStream):
+    order_by_field = "id"
     cursor_field = "updatedAt"
     filter_param = "updatedAtAfter"
 
@@ -117,11 +118,14 @@ class PardotUpdatedAtReplicationStream(PardotStream):
     ) -> MutableMapping[str, Any]:
         params = super().request_params(stream_state, stream_slice=stream_slice, next_page_token=next_page_token)
         if next_page_token is None:
-            params.update({"orderBy": self.cursor_field})
+            params.update({"orderBy": self.order_by_field})
+            cursor_field_value = stream_state.get(self.cursor_field, None) if stream_state is not None else None
+            if cursor_field_value is not None:
+                params.update({self.filter_param: cursor_field_value})
         return params
 
 
-class ProspectAccounts(PardotUpdatedAtReplicationStream):
+class ProspectAccounts(PardotIncrementalReplicationStream):
     """
     API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/prospect-account-v5.html
     """
@@ -129,7 +133,7 @@ class ProspectAccounts(PardotUpdatedAtReplicationStream):
     object_name = "prospect-accounts"
 
 
-class Lists(PardotUpdatedAtReplicationStream):
+class Lists(PardotIncrementalReplicationStream):
     """
     API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/list-v5.html
     """
@@ -137,7 +141,7 @@ class Lists(PardotUpdatedAtReplicationStream):
     object_name = "lists"
 
 
-class ListEmail(PardotUpdatedAtReplicationStream):
+class ListEmail(PardotIncrementalReplicationStream):
     """
     API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/list-email-v5.html
     """
@@ -145,7 +149,7 @@ class ListEmail(PardotUpdatedAtReplicationStream):
     object_name = "list-emails"
 
 
-class Prospects(PardotUpdatedAtReplicationStream):
+class Prospects(PardotIncrementalReplicationStream):
     """
     API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/prospect-v5.html
     """
@@ -153,7 +157,7 @@ class Prospects(PardotUpdatedAtReplicationStream):
     object_name = "prospects"
 
 
-class Visitors(PardotUpdatedAtReplicationStream):
+class Visitors(PardotIncrementalReplicationStream):
     """
     API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/visitors-v4.html
     """
@@ -162,7 +166,7 @@ class Visitors(PardotUpdatedAtReplicationStream):
     object_name = "visitors"
 
 
-class Campaigns(PardotUpdatedAtReplicationStream):
+class Campaigns(PardotIncrementalReplicationStream):
     """
     API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/campaigns-v4.html
     """
@@ -173,7 +177,7 @@ class Campaigns(PardotUpdatedAtReplicationStream):
     is_integer_state = True
 
 
-class ListMembership(PardotUpdatedAtReplicationStream):
+class ListMembership(PardotIncrementalReplicationStream):
     """
     API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/list-membership-v5.html
     """
@@ -191,8 +195,8 @@ class Opportunities(PardotStream):
     """
 
     object_name = "opportunities"
-    filter_param = "createdAtAfter"
     cursor_field = "createdAt"
+    filter_param = "createdAtAfter"
 
 
 class Users(PardotStream):
@@ -201,8 +205,18 @@ class Users(PardotStream):
     """
 
     object_name = "users"
-    filter_param = "createdAtAfter"
     cursor_field = "createdAt"
+    filter_param = "createdAtAfter"
+
+
+class Emails(PardotIncrementalReplicationStream):
+    """
+    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/email-v5.html
+    """
+
+    object_name = "emails"
+    cursor_field = "sentAt"
+    filter_param = "sentAtAfter"
 
 
 # PardotChildStreams
@@ -228,7 +242,7 @@ class PardotChildStream(PardotStream):
 
 class Visits(PardotChildStream):
     """
-    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/visits-v4.html
+    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/visit-v5.html
     """
 
     object_name = "visits"
@@ -247,25 +261,3 @@ class Visits(PardotChildStream):
         if next_page_token is None:
             params.update({"visitor_ids": stream_slice})
         return params
-
-
-# PardotSentAtReplicationStreams
-class PardotSentAtReplicationStream(PardotStream):
-    cursor_field = "sentAt"
-    filter_param = "sentAtAfter"
-
-    def request_params(
-        self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, any] = None, next_page_token: Mapping[str, Any] = None
-    ) -> MutableMapping[str, Any]:
-        params = super().request_params(stream_state, stream_slice=stream_slice, next_page_token=next_page_token)
-        if next_page_token is None:
-            params.update({"orderBy": self.cursor_field})
-        return params
-
-
-class Emails(PardotSentAtReplicationStream):
-    """
-    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/email-v5.html
-    """
-
-    object_name = "emails"
