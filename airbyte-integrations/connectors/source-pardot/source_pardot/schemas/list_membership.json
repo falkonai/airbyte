@@ -6,10 +6,10 @@
       "type": ["integer"]
     },
     "listId": {
-      "type": ["integer"]
+      "type": ["null", "integer"]
     },
     "prospectId": {
-      "type": ["integer"]
+      "type": ["null", "integer"]
     },
     "optedOut": {
       "type": ["null", "boolean"]
@@ -18,7 +18,7 @@
       "type": ["null", "boolean"]
     },
     "createdById": {
-      "type": ["integer"]
+      "type": ["null", "integer"]
     },
     "updatedById": {
       "type": ["null", "integer"]

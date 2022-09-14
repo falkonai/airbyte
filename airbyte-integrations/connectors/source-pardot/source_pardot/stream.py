@@ -112,6 +112,7 @@ class PardotIncrementalReplicationStream(PardotStream):
     order_by_field = "id"
     cursor_field = "updatedAt"
     filter_param = "updatedAtAfter"
+    additional_filters: Optional[Mapping[str, Any]] = None
 
     def request_params(
         self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
@@ -119,6 +120,8 @@ class PardotIncrementalReplicationStream(PardotStream):
         params = super().request_params(stream_state, stream_slice=stream_slice, next_page_token=next_page_token)
         if next_page_token is None:
             params.update({"orderBy": self.order_by_field})
+            if self.additional_filters is not None:
+                params.update(self.additional_filters)
             cursor_field_value = stream_state.get(self.cursor_field, None) if stream_state is not None else None
             if cursor_field_value is not None:
                 params.update({self.filter_param: cursor_field_value})
@@ -164,6 +167,7 @@ class Visitors(PardotIncrementalReplicationStream):
 
     use_cache = True
     object_name = "visitors"
+    additional_filters = {"isIdentified": False}
 
 
 class Campaigns(PardotIncrementalReplicationStream):

@@ -27,7 +27,7 @@
       "type": ["null", "boolean"]
     },
     "createdById": {
-      "type": ["integer"]
+      "type": ["null", "integer"]
     },
     "updatedById": {
       "type": ["null", "integer"]

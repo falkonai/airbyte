@@ -2,23 +2,23 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
-    "id": { "type": ["null", "int"] },
+    "id": { "type": ["null", "integer"] },
     "name": { "type": ["null", "string"] },
     "subject": { "type": ["null", "string"] },
     "textMessage": { "type": ["null", "string"] },
     "htmlMessage": { "type": ["null", "string"] },
-    "campaignId": { "type": ["null", "int"] },
+    "campaignId": { "type": ["null", "integer"] },
     "isPaused": { "type": ["null", "boolean"] },
     "isSent": { "type": ["null", "boolean"] },
     "isDeleted": { "type": ["null", "boolean"] },
     "clientType": { "type": ["null", "string"] },
-    "createdById": { "type": ["null", "int"] },
-    "updatedById": { "type": ["null", "int"] },
+    "createdById": { "type": ["null", "integer"] },
+    "updatedById": { "type": ["null", "integer"] },
     "createdAt": { "type": ["null", "datetime"] },
     "updatedAt": { "type": ["null", "datetime"] },
     "sentAt": { "type": ["null", "datetime"] },
     "operationalEmail": { "type": ["null", "boolean"] },
-    "emailTemplateId": { "type": ["null", "int"] },
-    "trackerDomainId": { "type": ["null", "int"] }
+    "emailTemplateId": { "type": ["null", "integer"] },
+    "trackerDomainId": { "type": ["null", "integer"] }
   }
 }

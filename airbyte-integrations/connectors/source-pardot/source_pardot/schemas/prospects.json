@@ -70,7 +70,7 @@
     "yearsInBusiness": { "type": ["null", "string"] },
     "zip": { "type": ["null", "string"] },
     "createdById": {
-      "type": ["integer"]
+      "type": ["null", "integer"]
     },
     "updatedById": {
       "type": ["null", "integer"]

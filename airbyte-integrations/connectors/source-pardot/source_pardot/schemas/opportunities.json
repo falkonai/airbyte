@@ -37,7 +37,7 @@
       "format": "date-time"
     },
     "createdById": {
-      "type": ["integer"]
+      "type": ["null", "integer"]
     },
     "updatedById": {
       "type": ["null", "integer"]
