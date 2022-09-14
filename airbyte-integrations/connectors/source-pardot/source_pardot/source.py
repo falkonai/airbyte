@@ -10,7 +10,20 @@ from airbyte_cdk.sources.streams import Stream
 from airbyte_cdk.sources.streams.http.auth import TokenAuthenticator
 
 from .api import Pardot
-from .stream import Campaigns, EmailClicks, ListMembership, Lists, ProspectAccounts, Prospects, Users, VisitorActivities, Visitors, Visits
+from .stream import (
+    Campaigns,
+    Emails,
+    ListEmail,
+    ListMembership,
+    Lists,
+    ProspectAccounts,
+    Prospects,
+    Users,
+    VisitorActivities,
+    VisitorPageViews,
+    Visitors,
+    Visits,
+)
 
 
 # Source
@@ -37,13 +50,15 @@ class SourcePardot(AbstractSource):
         visitors = Visitors(**args)
 
         return [
-            EmailClicks(**args),
+            Emails(**args),
             Campaigns(**args),
             ListMembership(**args),
+            ListEmail(**args),
             Lists(**args),
             ProspectAccounts(**args),
             Prospects(**args),
             Users(**args),
+            VisitorPageViews(**args),
             VisitorActivities(**args),
             visitors,
             Visits(parent_stream=visitors, **args),

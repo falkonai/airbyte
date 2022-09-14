@@ -8,23 +8,32 @@
     "email": {
       "type": ["null", "string"]
     },
-    "first_name": {
+    "firstName": {
       "type": ["null", "string"]
     },
-    "last_name": {
+    "lastName": {
       "type": ["null", "string"]
     },
-    "job_title": {
+    "username": {
+      "type": ["null", "string"]
+    },
+    "jobTitle": {
       "type": ["null", "string"]
     },
     "role": {
       "type": ["null", "string"]
     },
-    "created_at": {
+    "createdById": {
+      "type": ["integer"]
+    },
+    "updatedById": {
+      "type": ["null", "integer"]
+    },
+    "createdAt": {
       "type": ["null", "string"],
       "format": "date-time"
     },
-    "updated_at": {
+    "updatedAt": {
       "type": ["null", "string"],
       "format": "date-time"
     }

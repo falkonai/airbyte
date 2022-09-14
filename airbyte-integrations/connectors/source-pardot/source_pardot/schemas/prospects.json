@@ -2,142 +2,84 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
-    "id": {
+    "id": { "type": ["null", "integer"] },
+    "addressOne": { "type": ["null", "string"] },
+    "addressTwo": { "type": ["null", "string"] },
+    "annualRevenue": { "type": ["null", "string"] },
+    "assignedToId": { "type": ["null", "integer"] },
+    "campaignId": { "type": ["null", "integer"] },
+    "campaignParameter": { "type": ["null", "string"] },
+    "city": { "type": ["null", "string"] },
+    "comments": { "type": ["null", "string"] },
+    "company": { "type": ["null", "string"] },
+    "contentParameter": { "type": ["null", "string"] },
+    "convertedAt": { "type": ["null", "datetime"] },
+    "convertedFromObjectName": { "type": ["null", "string"] },
+    "convertedFromObjectType": { "type": ["null", "string"] },
+    "country": { "type": ["null", "string"] },
+    "department": { "type": ["null", "string"] },
+    "doNotSell": { "type": ["null", "boolean"] },
+    "emailBouncedAt": { "type": ["null", "datetime"] },
+    "emailBouncedReason": { "type": ["null", "string"] },
+    "employees": { "type": ["null", "string"] },
+    "fax": { "type": ["null", "string"] },
+    "firstActivityAt": { "type": ["null", "datetime"] },
+    "firstAssignedAt": { "type": ["null", "datetime"] },
+    "firstName": { "type": ["null", "string"] },
+    "firstReferrerQuery": { "type": ["null", "string"] },
+    "firstReferrerType": { "type": ["null", "string"] },
+    "firstReferrerUrl": { "type": ["null", "string"] },
+    "grade": { "type": ["null", "string"] },
+    "industry": { "type": ["null", "string"] },
+    "isDeleted": { "type": ["null", "boolean"] },
+    "isDoNotCall": { "type": ["null", "boolean"] },
+    "isDoNotEmail": { "type": ["null", "boolean"] },
+    "isEmailHardBounced": { "type": ["null", "boolean"] },
+    "isReviewed": { "type": ["null", "boolean"] },
+    "isStarred": { "type": ["null", "boolean"] },
+    "jobTitle": { "type": ["null", "string"] },
+    "lastActivityAt": { "type": ["null", "datetime"] },
+    "lastName": { "type": ["null", "string"] },
+    "lifecycleStageId": { "type": ["null", "integer"] },
+    "mediumParameter": { "type": ["null", "string"] },
+    "notes": { "type": ["null", "string"] },
+    "optedOut": { "type": ["null", "boolean"] },
+    "password": { "type": ["null", "string"] },
+    "phone": { "type": ["null", "string"] },
+    "profileId": { "type": ["null", "integer"] },
+    "prospectAccountId": { "type": ["null", "integer"] },
+    "recentInteraction": { "type": ["null", "string"] },
+    "salesforceAccountId": { "type": ["null", "string"] },
+    "salesforceCampaignId": { "type": ["null", "string"] },
+    "salesforceContactId": { "type": ["null", "string"] },
+    "salesforceId": { "type": ["null", "string"] },
+    "salesforceLastSync": { "type": ["null", "datetime"] },
+    "salesforceLeadId": { "type": ["null", "string"] },
+    "salesforceOwnerId": { "type": ["null", "integer"] },
+    "salesforceOwnerId": { "type": ["null", "string"] },
+    "salesforceUrl": { "type": ["null", "string"] },
+    "salutation": { "type": ["null", "string"] },
+    "score": { "type": ["null", "integer"] },
+    "source": { "type": ["null", "string"] },
+    "sourceParameter": { "type": ["null", "string"] },
+    "state": { "type": ["null", "string"] },
+    "termParameter": { "type": ["null", "string"] },
+    "territory": { "type": ["null", "string"] },
+    "userId": { "type": ["null", "integer"] },
+    "website": { "type": ["null", "string"] },
+    "yearsInBusiness": { "type": ["null", "string"] },
+    "zip": { "type": ["null", "string"] },
+    "createdById": {
       "type": ["integer"]
     },
-    "campaign_id": {
+    "updatedById": {
       "type": ["null", "integer"]
     },
-    "salutation": {
-      "type": ["null", "string"]
-    },
-    "first_name": {
-      "type": ["null", "string"]
-    },
-    "last_name": {
-      "type": ["null", "string"]
-    },
-    "email": {
-      "type": ["null", "string"]
-    },
-    "password": {
-      "type": ["null", "string"]
-    },
-    "company": {
-      "type": ["null", "string"]
-    },
-    "prospect_account_id": {
-      "type": ["null", "integer"]
-    },
-    "website": {
-      "type": ["null", "string"]
-    },
-    "job_title": {
-      "type": ["null", "string"]
-    },
-    "department": {
-      "type": ["null", "string"]
-    },
-    "country": {
-      "type": ["null", "string"]
-    },
-    "address_one": {
-      "type": ["null", "string"]
-    },
-    "address_two": {
-      "type": ["null", "string"]
-    },
-    "city": {
-      "type": ["null", "string"]
-    },
-    "state": {
-      "type": ["null", "string"]
-    },
-    "territory": {
-      "type": ["null", "string"]
-    },
-    "zip": {
-      "type": ["null", "string"]
-    },
-    "phone": {
-      "type": ["null", "string"]
-    },
-    "fax": {
-      "type": ["null", "string"]
-    },
-    "source": {
-      "type": ["null", "string"]
-    },
-    "annual_revenue": {
-      "type": ["null", "string"]
-    },
-    "employees": {
-      "type": ["null", "string"]
-    },
-    "industry": {
-      "type": ["null", "string"]
-    },
-    "years_in_business": {
-      "type": ["null", "string"]
-    },
-    "comments": {
-      "type": ["null", "string"]
-    },
-    "notes": {
-      "type": ["null", "string"]
-    },
-    "score": {
-      "type": ["null", "integer"]
-    },
-    "grade": {
-      "type": ["null", "string"]
-    },
-    "last_activity_at": {
+    "createdAt": {
       "type": ["null", "string"],
       "format": "date-time"
     },
-    "recent_interaction": {
-      "type": ["null", "string"]
-    },
-    "crm_lead_fid": {
-      "type": ["null", "string"]
-    },
-    "crm_contact_fid": {
-      "type": ["null", "string"]
-    },
-    "crm_owner_fid": {
-      "type": ["null", "string"]
-    },
-    "crm_account_fid": {
-      "type": ["null", "string"]
-    },
-    "crm_last_sync": {
-      "type": ["null", "string"],
-      "format": "date-time"
-    },
-    "crm_url": {
-      "type": ["null", "string"]
-    },
-    "is_do_not_email": {
-      "type": ["null", "integer"]
-    },
-    "is_do_not_call": {
-      "type": ["null", "integer"]
-    },
-    "opted_out": {
-      "type": ["null", "integer"]
-    },
-    "is_reviewed": {
-      "type": ["null", "integer"]
-    },
-    "is_starred": {
-      "type": ["null", "integer"]
-    },
-    "created_at": {
-      "type": ["null", "string"],
-      "format": "date-time"
-    },
-    "updated_at": {
+    "updatedAt": {
       "type": ["null", "string"],
       "format": "date-time"
     }

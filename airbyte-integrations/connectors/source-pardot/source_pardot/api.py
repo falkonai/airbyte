@@ -10,6 +10,7 @@ class Pardot:
     def __init__(
         self,
         refresh_token: str = None,
+        grant_type: str = None,
         token: str = None,
         client_id: str = None,
         client_secret: str = None,
@@ -19,6 +20,7 @@ class Pardot:
         pardot_business_unit_id: str = None,
     ):
         self.api_type = api_type.upper() if api_type else None
+        self.grant_type = grant_type
         self.refresh_token = refresh_token
         self.token = token
         self.client_id = client_id
@@ -32,11 +34,12 @@ class Pardot:
 
     def login(self):
         login_url = f"https://{'test' if self.is_sandbox else 'login'}.salesforce.com/services/oauth2/token"
+        token_name = "refresh_token" if self.grant_type == "refresh_token" else "assertion"
         login_body = {
-            "grant_type": "refresh_token",
+            "grant_type": self.grant_type,
             "client_id": self.client_id,
             "client_secret": self.client_secret,
-            "refresh_token": self.refresh_token,
+            token_name: self.refresh_token,
         }
 
         resp = self._make_request("POST", login_url, body=login_body, headers={"Content-Type": "application/x-www-form-urlencoded"})

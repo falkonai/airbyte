@@ -5,20 +5,29 @@
     "id": {
       "type": ["integer"]
     },
-    "list_id": {
+    "listId": {
       "type": ["integer"]
     },
-    "prospect_id": {
+    "prospectId": {
       "type": ["integer"]
     },
-    "opted_out": {
+    "optedOut": {
       "type": ["null", "boolean"]
     },
-    "created_at": {
+    "isDeleted": {
+      "type": ["null", "boolean"]
+    },
+    "createdById": {
+      "type": ["integer"]
+    },
+    "updatedById": {
+      "type": ["null", "integer"]
+    },
+    "createdAt": {
       "type": ["null", "string"],
       "format": "date-time"
     },
-    "updated_at": {
+    "updatedAt": {
       "type": ["null", "string"],
       "format": "date-time"
     }

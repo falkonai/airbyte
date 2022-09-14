@@ -8,26 +8,35 @@
     "name": {
       "type": ["null", "string"]
     },
-    "is_public": {
-      "type": ["null", "boolean"]
-    },
-    "is_dynamic": {
-      "type": ["null", "boolean"]
+    "description": {
+      "type": ["null", "string"]
     },
     "title": {
       "type": ["null", "string"]
     },
-    "description": {
-      "type": ["null", "string"]
-    },
-    "is_crm_visible": {
+    "isPublic": {
       "type": ["null", "boolean"]
     },
-    "created_at": {
+    "folderId": {
+      "type": ["null", "integer"]
+    },
+    "campaignId": {
+      "type": ["null", "integer"]
+    },
+    "isDynamic": {
+      "type": ["null", "boolean"]
+    },
+    "createdById": {
+      "type": ["integer"]
+    },
+    "updatedById": {
+      "type": ["null", "integer"]
+    },
+    "createdAt": {
       "type": ["null", "string"],
       "format": "date-time"
     },
-    "updated_at": {
+    "updatedAt": {
       "type": ["null", "string"],
       "format": "date-time"
     }

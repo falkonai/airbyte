@@ -15,23 +15,22 @@ from airbyte_cdk.sources.utils.transform import TransformConfig, TypeTransformer
 # Basic full refresh stream
 class PardotStream(HttpStream, ABC):
     url_base = "https://pi.pardot.com/api/"
-    api_version = "4"
+    api_version = "5"
     time_filter_template = "%Y-%m-%dT%H:%M:%SZ"
     primary_key = "id"
     is_integer_state = False
     transformer: TypeTransformer = TypeTransformer(TransformConfig.DefaultSchemaNormalization)
+    limit = 200
 
     def __init__(self, config: Dict, **kwargs):
         super().__init__(**kwargs)
         self.config = config
 
     def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
-        results = response.json().get("result", {})
-        record_count = results.get("total_results")
-        if record_count and record_count > 0:
-            # The result may be a dict if one record is returned
-            if isinstance(results[self.data_key], list):
-                return {self.filter_param: results[self.data_key][-1][self.cursor_field]}
+        results = response.json()
+        next_page_token = results.get("nextPageToken")
+        if next_page_token and len(next_page_token) > 0:
+            return {"nextPageToken": next_page_token}
 
     def request_headers(
         self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
@@ -42,29 +41,31 @@ class PardotStream(HttpStream, ABC):
     def request_params(
         self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, any] = None, next_page_token: Mapping[str, Any] = None
     ) -> MutableMapping[str, Any]:
-        params = {
-            "format": "json",
-        }
-        start_date = self.config.get("start_date", None)
-        if start_date:
-            params.update({"created_after": pendulum.parse(start_date, strict=False).strftime(self.time_filter_template)})
-        if next_page_token:
+        schema = self.get_json_schema()
+        fields = ",".join(schema["properties"].keys())
+        params = {"fields": fields}
+        if next_page_token is not None:
             params.update(**next_page_token)
+        else:
+            start_date = self.config.get("start_date", None)
+            if start_date:
+                params.update({"createdAfter": pendulum.parse(start_date, strict=False).strftime(self.time_filter_template)})
+
+            params.update({"limit": self.limit})
         return params
 
     def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
-        results = response.json().get("result", {})
-        record_count = results.get("total_results")
+        results = response.json()
+        values = results.get("values", [])
         # The result may be a dict if one record is returned
-        if self.data_key in results and isinstance(results[self.data_key], dict):
-            yield results[self.data_key]
-        elif record_count and record_count > 0 and self.data_key in results:
-            yield from results[self.data_key]
+        if values is not None:
+            for val in values:
+                yield val
 
     def path(
         self, stream_state: Mapping[str, Any] = None, stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
     ) -> str:
-        return f"{self.object_name}/version/{self.api_version}/do/query"
+        return f"v{self.api_version}/objects/{self.object_name}"
 
     def get_updated_state(self, current_stream_state: MutableMapping[str, Any], latest_record: Mapping[str, Any]) -> Mapping[str, Any]:
         blank_val = 0 if self.is_integer_state else ""
@@ -73,78 +74,83 @@ class PardotStream(HttpStream, ABC):
         }
 
     def filter_records_newer_than_state(self, stream_state: Mapping[str, Any] = None, records_slice: Mapping[str, Any] = None) -> Iterable:
-        if stream_state:
+        if stream_state and records_slice is not None:
             for record in records_slice:
                 if record[self.cursor_field] >= stream_state.get(self.cursor_field):
                     yield record
-        else:
+        elif records_slice is not None:
             yield from records_slice
 
 
 # PardotIdReplicationStreams
 class PardotIdReplicationStream(PardotStream):
     cursor_field = "id"
-    filter_param = "id_greater_than"
+    filter_param = "idGreaterThan"
     is_integer_state = True
-
-
-class EmailClicks(PardotIdReplicationStream):
-    """
-    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/batch-email-clicks-v4.html
-    """
-
-    object_name = "emailClick"
-    data_key = "emailClick"
 
 
 class VisitorActivities(PardotIdReplicationStream):
     """
-    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/visitor-activities-v4.html
+    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/visitor-activity-v5.html
     """
 
     use_cache = True
-    object_name = "visitorActivity"
-    data_key = "visitor_activity"
+    object_name = "visitor-activities"
+
+
+class VisitorPageViews(PardotIdReplicationStream):
+    """
+    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/visitor-page-view-v5.html
+    """
+
+    use_cache = True
+    object_name = "visitor-page-views"
 
 
 # PardotUpdatedAtReplicationStreams
 class PardotUpdatedAtReplicationStream(PardotStream):
-    cursor_field = "updated_at"
-    filter_param = "updated_after"
+    cursor_field = "updatedAt"
+    filter_param = "updatedAtAfter"
 
     def request_params(
-        self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, any] = None, next_page_token: Mapping[str, Any] = None
+        self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
     ) -> MutableMapping[str, Any]:
         params = super().request_params(stream_state, stream_slice=stream_slice, next_page_token=next_page_token)
-        params.update({"sort_by": "updated_at", "sort_order": "ascending"})
+        if next_page_token is None:
+            params.update({"orderBy": self.cursor_field})
         return params
 
 
 class ProspectAccounts(PardotUpdatedAtReplicationStream):
     """
-    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/prospect-accounts-v4.html
+    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/prospect-account-v5.html
     """
 
-    object_name = "prospectAccount"
-    data_key = "prospectAccount"
+    object_name = "prospect-accounts"
 
 
 class Lists(PardotUpdatedAtReplicationStream):
     """
-    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/lists-v4.html
+    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/list-v5.html
     """
 
-    object_name = "list"
-    data_key = "list"
+    object_name = "lists"
+
+
+class ListEmail(PardotUpdatedAtReplicationStream):
+    """
+    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/list-email-v5.html
+    """
+
+    object_name = "list-emails"
 
 
 class Prospects(PardotUpdatedAtReplicationStream):
     """
-    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/prospects-v4.html
+    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/prospect-v5.html
     """
 
-    object_name = "prospect"
-    data_key = "prospect"
+    object_name = "prospects"
 
 
 class Visitors(PardotUpdatedAtReplicationStream):
@@ -153,14 +159,7 @@ class Visitors(PardotUpdatedAtReplicationStream):
     """
 
     use_cache = True
-    object_name = "visitor"
-    data_key = "visitor"
-
-    def stream_slices(
-        self, sync_mode: SyncMode, cursor_field: List[str] = None, stream_state: Mapping[str, Any] = None
-    ) -> Iterable[Optional[Mapping[str, Any]]]:
-        slices = super().stream_slices(sync_mode, cursor_field=cursor_field, stream_state=stream_state)
-        return slices
+    object_name = "visitors"
 
 
 class Campaigns(PardotUpdatedAtReplicationStream):
@@ -169,57 +168,41 @@ class Campaigns(PardotUpdatedAtReplicationStream):
     """
 
     cursor_field = "id"
-    filter_param = "id_greater_than"
-    object_name = "campaign"
-    data_key = "campaign"
+    filter_param = "idGreaterThan"
+    object_name = "campaigns"
     is_integer_state = True
-
-    def request_params(
-        self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, any] = None, next_page_token: Mapping[str, Any] = None
-    ) -> MutableMapping[str, Any]:
-        params = super().request_params(stream_state, stream_slice=stream_slice, next_page_token=next_page_token)
-        params.update({"sort_by": "id", "sort_order": "ascending"})
-        return params
 
 
 class ListMembership(PardotUpdatedAtReplicationStream):
     """
-    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/list-memberships-v4.html
+    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/list-membership-v5.html
     """
 
-    object_name = "listMembership"
-    data_key = "list_membership"
-
-    def request_params(
-        self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, any] = None, next_page_token: Mapping[str, Any] = None
-    ) -> MutableMapping[str, Any]:
-        params = super().request_params(stream_state, stream_slice=stream_slice, next_page_token=next_page_token)
-        params.update({"sort_by": "id", "sort_order": "ascending"})
-        return params
+    cursor_field = "id"
+    filter_param = "idGreaterThan"
+    object_name = "list-memberships"
 
 
 # PardotFullReplicationStreams
 class Opportunities(PardotStream):
     """
-    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/opportunities-v4.html
+    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/opportunity-v5.html
     Currently disabled because test account doesn't have any data
     """
 
-    object_name = "opportunity"
-    data_key = "opportunity"
-    filter_param = "created_after"
-    cursor_field = "created_at"
+    object_name = "opportunities"
+    filter_param = "createdAtAfter"
+    cursor_field = "createdAt"
 
 
 class Users(PardotStream):
     """
-    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/users-v4.html
+    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/user-v5.html
     """
 
-    object_name = "user"
-    data_key = "user"
-    filter_param = "created_after"
-    cursor_field = "created_at"
+    object_name = "users"
+    filter_param = "createdAtAfter"
+    cursor_field = "createdAt"
 
 
 # PardotChildStreams
@@ -248,8 +231,7 @@ class Visits(PardotChildStream):
     API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/visits-v4.html
     """
 
-    object_name = "visit"
-    data_key = "visit"
+    object_name = "visits"
     filter_param = "offset"
     cursor_field = "id"
     offset = 0
@@ -259,8 +241,31 @@ class Visits(PardotChildStream):
         return {}
 
     def request_params(
+        self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
+    ) -> MutableMapping[str, Any]:
+        params = super().request_params(stream_state, stream_slice=stream_slice, next_page_token=next_page_token)
+        if next_page_token is None:
+            params.update({"visitor_ids": stream_slice})
+        return params
+
+
+# PardotSentAtReplicationStreams
+class PardotSentAtReplicationStream(PardotStream):
+    cursor_field = "sentAt"
+    filter_param = "sentAtAfter"
+
+    def request_params(
         self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, any] = None, next_page_token: Mapping[str, Any] = None
     ) -> MutableMapping[str, Any]:
         params = super().request_params(stream_state, stream_slice=stream_slice, next_page_token=next_page_token)
-        params.update({"visitor_ids": stream_slice})
+        if next_page_token is None:
+            params.update({"orderBy": self.cursor_field})
         return params
+
+
+class Emails(PardotSentAtReplicationStream):
+    """
+    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/email-v5.html
+    """
+
+    object_name = "emails"

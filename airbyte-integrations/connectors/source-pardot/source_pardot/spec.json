@@ -27,7 +27,7 @@
         "airbyte_secret": true
       },
       "refresh_token": {
-        "description": "Salesforce Refresh Token used for Airbyte to access your Salesforce account. If you don't know what this is, follow this <a href=\"https://medium.com/@bpmmendis94/obtain-access-refresh-tokens-from-salesforce-rest-api-a324fe4ccd9b\">guide</a> to retrieve it.",
+        "description": "Salesforce Refresh Token or JWT used for Airbyte to access your Salesforce account. If you don't know how to retrieve a refresh token, follow this <a href=\"https://medium.com/@bpmmendis94/obtain-access-refresh-tokens-from-salesforce-rest-api-a324fe4ccd9b\">guide</a> to retrieve it. The Salesforce suggested approach is using a JWT signed by an x509 certificate for server to server oauth.",
         "type": "string",
         "airbyte_secret": true
       },
@@ -42,6 +42,12 @@
         "description": "Whether or not the the app is in a Salesforce sandbox. If you do not know what this, assume it is false.",
         "type": "boolean",
         "default": false
+      },
+      "grant_type": {
+        "description": "The grant type to use to get an access token. For server to server it's either 'refresh_token' or 'urn:ietf:params:oauth:grant-type:jwt-bearer'.",
+        "type": "string",
+        "default": "refresh_token",
+        "examples": ["2021-07-25T00:00:00Z"]
       }
     }
   }
