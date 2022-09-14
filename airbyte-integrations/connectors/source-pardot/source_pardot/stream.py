@@ -189,6 +189,7 @@ class ListMembership(PardotIncrementalReplicationStream):
     cursor_field = "id"
     filter_param = "idGreaterThan"
     object_name = "list-memberships"
+    is_integer_state = True
 
 
 # PardotFullReplicationStreams

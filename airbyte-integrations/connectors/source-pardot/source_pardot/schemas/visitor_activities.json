@@ -4,7 +4,6 @@
   "properties": {
     "id": { "type": ["null", "integer"] },
     "campaignId": { "type": ["null", "integer"] },
-    "campaign": { "type": ["null", "campaign"] },
     "customRedirectId": { "type": ["null", "integer"] },
     "details": { "type": ["null", "string"] },
     "emailId": { "type": ["null", "integer"] },
@@ -13,7 +12,6 @@
     "formHandlerId": { "type": ["null", "integer"] },
     "formId": { "type": ["null", "integer"] },
     "landingPageId": { "type": ["null", "integer"] },
-    "landingPage": { "type": ["null", "landing"] },
     "listEmailId": { "type": ["null", "integer"] },
     "multivariateTestVariationId": { "type": ["null", "integer"] },
     "opportunityId": { "type": ["null", "integer"] },
@@ -25,11 +23,11 @@
     "visitId": { "type": ["null", "integer"] },
     "visitorId": { "type": ["null", "integer"] },
     "visitorPageViewId": { "type": ["null", "integer"] },
-    "created_at": {
+    "createdAt": {
       "type": ["null", "string"],
       "format": "date-time"
     },
-    "updated_at": {
+    "updatedAt": {
       "type": ["null", "string"],
       "format": "date-time"
     }
