@@ -145,7 +145,7 @@ class Lists(PardotIncrementalReplicationStream):
     object_name = "lists"
 
 
-class ListEmail(PardotIncrementalReplicationStream):
+class ListEmails(PardotIncrementalReplicationStream):
     """
     API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/list-email-v5.html
     """
@@ -182,7 +182,7 @@ class Campaigns(PardotIncrementalReplicationStream):
     is_integer_state = True
 
 
-class ListMembership(PardotIncrementalReplicationStream):
+class ListMemberships(PardotIncrementalReplicationStream):
     """
     API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/list-membership-v5.html
     """
