@@ -92,6 +92,7 @@ class PardotIdReplicationStream(PardotStream):
 class VisitorActivities(PardotIdReplicationStream):
     """
     API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/visitor-activity-v5.html
+    Note: Not including details field since it causes salesforce's api to timeout with a 504.
     """
 
     use_cache = True
