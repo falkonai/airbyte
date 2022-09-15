@@ -5,8 +5,6 @@
     "id": { "type": ["null", "integer"] },
     "name": { "type": ["null", "string"] },
     "subject": { "type": ["null", "string"] },
-    "textMessage": { "type": ["null", "string"] },
-    "htmlMessage": { "type": ["null", "string"] },
     "campaignId": { "type": ["null", "integer"] },
     "isPaused": { "type": ["null", "boolean"] },
     "isSent": { "type": ["null", "boolean"] },
