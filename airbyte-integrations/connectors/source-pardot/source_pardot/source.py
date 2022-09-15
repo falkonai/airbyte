@@ -16,6 +16,7 @@ from .stream import (
     ListEmails,
     ListMemberships,
     Lists,
+    Opportunities,
     ProspectAccounts,
     Prospects,
     Users,
@@ -62,4 +63,5 @@ class SourcePardot(AbstractSource):
             VisitorActivities(**args),
             visitors,
             Visits(**args),
+            Opportunities(**args),
         ]

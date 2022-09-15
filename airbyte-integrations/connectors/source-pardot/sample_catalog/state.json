@@ -1,0 +1,38 @@
+{
+  "lists": {
+    "updatedAt": "2022-09-13T15:21:52-07:00"
+  },
+  "users": {
+    "createdAt": "2022-09-13T15:28:20-07:00"
+  },
+  "emails": {
+    "sentAt": "2016-10-26T06:02:34-07:00"
+  },
+  "visitors": {
+    "updatedAt": "2022-09-01T05:19:44-07:00"
+  },
+  "campaigns": {
+    "id": 1
+  },
+  "prospects": {
+    "updatedAt": "2022-09-13T22:18:56-07:00"
+  },
+  "list_emails": {
+    "updatedAt": "2022-09-13T09:46:03-07:00"
+  },
+  "list_memberships": {
+    "id": 1
+  },
+  "prospect_accounts": {
+    "updatedAt": "2022-09-13T22:06:01-07:00"
+  },
+  "visitor_activities": {
+    "id": 1
+  },
+  "visitor_page_views": {
+    "id": 1
+  },
+  "visits": {
+    "id": 1
+  }
+}

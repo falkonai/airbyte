@@ -27,7 +27,7 @@
       "type": ["null", "string"]
     },
     "value": {
-      "type": ["null", "float"]
+      "type": ["null", "number"]
     },
     "salesforceId": {
       "type": ["null", "string"]

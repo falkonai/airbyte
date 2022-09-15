@@ -82,30 +82,35 @@ class PardotStream(HttpStream, ABC):
             yield from records_slice
 
 
-# PardotIdReplicationStreams
-class PardotIdReplicationStream(PardotStream):
-    cursor_field = "id"
-    filter_param = "idGreaterThan"
-    is_integer_state = True
-
-
-class VisitorActivities(PardotIdReplicationStream):
+# PardotFullReplicationStreams (doesn't filter via the api since filters are not available via salesforce.)
+class ProspectAccounts(PardotStream):
     """
-    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/visitor-activity-v5.html
-    Note: Not including details field since it causes salesforce's api to timeout with a 504.
+    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/prospect-account-v5.html
     """
 
-    use_cache = True
-    object_name = "visitor-activities"
+    object_name = "prospect-accounts"
+    cursor_field = "createdAt"
+    filter_param = "createdAtAfter"
 
 
-class VisitorPageViews(PardotIdReplicationStream):
+class Opportunities(PardotStream):
     """
-    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/visitor-page-view-v5.html
+    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/opportunity-v5.html
     """
 
-    use_cache = True
-    object_name = "visitor-page-views"
+    object_name = "opportunities"
+    cursor_field = "createdAt"
+    filter_param = "createdAtAfter"
+
+
+class Users(PardotStream):
+    """
+    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/user-v5.html
+    """
+
+    object_name = "users"
+    cursor_field = "createdAt"
+    filter_param = "createdAtAfter"
 
 
 # PardotIncrementalReplicationStream
@@ -129,12 +134,27 @@ class PardotIncrementalReplicationStream(PardotStream):
         return params
 
 
-class ProspectAccounts(PardotIncrementalReplicationStream):
+class VisitorActivities(PardotIncrementalReplicationStream):
     """
-    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/prospect-account-v5.html
+    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/visitor-activity-v5.html
+    Note: Not including details field since it causes salesforce's api to timeout with a 504.
     """
 
-    object_name = "prospect-accounts"
+    use_cache = True
+    object_name = "visitor-activities"
+    cursor_field = "id"
+    filter_param = "idGreaterThan"
+
+
+class VisitorPageViews(PardotIncrementalReplicationStream):
+    """
+    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/visitor-page-view-v5.html
+    """
+
+    use_cache = True
+    object_name = "visitor-page-views"
+    cursor_field = "id"
+    filter_param = "idGreaterThan"
 
 
 class Lists(PardotIncrementalReplicationStream):
@@ -212,25 +232,3 @@ class Visits(PardotIncrementalReplicationStream):
     filter_param = "idGreaterThan"
     cursor_field = "id"
     is_integer_state = True
-
-
-# PardotFullReplicationStreams
-class Opportunities(PardotStream):
-    """
-    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/opportunity-v5.html
-    Currently disabled because test account doesn't have any data
-    """
-
-    object_name = "opportunities"
-    cursor_field = "createdAt"
-    filter_param = "createdAtAfter"
-
-
-class Users(PardotStream):
-    """
-    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/user-v5.html
-    """
-
-    object_name = "users"
-    cursor_field = "createdAt"
-    filter_param = "createdAtAfter"
