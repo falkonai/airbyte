@@ -57,10 +57,8 @@ class PardotStream(HttpStream, ABC):
     def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
         results = response.json()
         values = results.get("values", [])
-        # The result may be a dict if one record is returned
-        if values is not None:
-            for val in values:
-                yield val
+        for val in values:
+            yield val
 
     def path(
         self, stream_state: Mapping[str, Any] = None, stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
