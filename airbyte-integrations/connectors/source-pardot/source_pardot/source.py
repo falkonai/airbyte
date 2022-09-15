@@ -61,5 +61,5 @@ class SourcePardot(AbstractSource):
             VisitorPageViews(**args),
             VisitorActivities(**args),
             visitors,
-            Visits(parent_stream=visitors, **args),
+            Visits(**args),
         ]
