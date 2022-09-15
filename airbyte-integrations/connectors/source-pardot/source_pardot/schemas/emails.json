@@ -6,8 +6,6 @@
     "campaignId": { "type": ["null", "integer"] },
     "clientType": { "type": ["null", "string"] },
     "createdById": { "type": ["null", "integer"] },
-    "textMessage": { "type": ["null", "string"] },
-    "htmlMessage": { "type": ["null", "string"] },
     "listId": { "type": ["null", "integer"] },
     "listEmailId": { "type": ["null", "integer"] },
     "name": { "type": ["null", "string"] },
