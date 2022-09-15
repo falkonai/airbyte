@@ -97,7 +97,6 @@ class VisitorActivities(PardotIdReplicationStream):
 
     use_cache = True
     object_name = "visitor-activities"
-    limit = 100
 
 
 class VisitorPageViews(PardotIdReplicationStream):
