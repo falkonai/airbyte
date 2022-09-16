@@ -20,17 +20,29 @@ class PardotStream(HttpStream, ABC):
     primary_key = "id"
     is_integer_state = False
     transformer: TypeTransformer = TypeTransformer(TransformConfig.DefaultSchemaNormalization)
-    limit = 200
+    limit = 1000
 
     def __init__(self, config: Dict, **kwargs):
         super().__init__(**kwargs)
         self.config = config
+
+    def _is_page_token_available(self, next_page_token: Optional[Mapping[str, Any]]):
+        return next_page_token is not None and not next_page_token.get("reset_page_token", False)
 
     def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
         results = response.json()
         next_page_token = results.get("nextPageToken")
         if next_page_token and len(next_page_token) > 0:
             return {"nextPageToken": next_page_token}
+        elif (
+            results.headers.get("Pardot-Warning")
+            == "203;Record count for nextPageToken sequence has been exceeded. No page token returned."
+        ):
+            # Returning None will discontinue pagination.
+            return {"reset_page_token": True}
+        else:
+            # Returning None will discontinue pagination.
+            return None
 
     def request_headers(
         self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
@@ -44,7 +56,7 @@ class PardotStream(HttpStream, ABC):
         schema = self.get_json_schema()
         fields = ",".join(schema["properties"].keys())
         params = {"fields": fields}
-        if next_page_token is not None:
+        if self._is_page_token_available(next_page_token):
             params.update(**next_page_token)
         else:
             start_date = self.config.get("start_date", None)
@@ -122,7 +134,7 @@ class PardotIncrementalReplicationStream(PardotStream):
         self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
     ) -> MutableMapping[str, Any]:
         params = super().request_params(stream_state, stream_slice=stream_slice, next_page_token=next_page_token)
-        if next_page_token is None:
+        if not self._is_page_token_available(next_page_token):
             params.update({"orderBy": self.order_by_field})
             if self.additional_filters is not None:
                 params.update(self.additional_filters)
@@ -183,7 +195,7 @@ class Prospects(PardotIncrementalReplicationStream):
 
 class Visitors(PardotIncrementalReplicationStream):
     """
-    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/visitors-v4.html
+    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/visitor-v5.html
     """
 
     use_cache = True
@@ -193,7 +205,7 @@ class Visitors(PardotIncrementalReplicationStream):
 
 class Campaigns(PardotIncrementalReplicationStream):
     """
-    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/campaigns-v4.html
+    API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/campaign-v5.html
     """
 
     cursor_field = "id"
