@@ -142,6 +142,7 @@ class VisitorActivities(PardotIncrementalReplicationStream):
     object_name = "visitor-activities"
     cursor_field = "id"
     filter_param = "idGreaterThan"
+    is_integer_state = True
 
 
 class VisitorPageViews(PardotIncrementalReplicationStream):
@@ -153,6 +154,7 @@ class VisitorPageViews(PardotIncrementalReplicationStream):
     object_name = "visitor-page-views"
     cursor_field = "id"
     filter_param = "idGreaterThan"
+    is_integer_state = True
 
 
 class Lists(PardotIncrementalReplicationStream):
