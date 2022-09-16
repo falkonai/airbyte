@@ -35,7 +35,7 @@ class PardotStream(HttpStream, ABC):
         if next_page_token and len(next_page_token) > 0:
             return {"nextPageToken": next_page_token}
         elif (
-            results.headers.get("Pardot-Warning")
+            response.headers.get("Pardot-Warning")
             == "203;Record count for nextPageToken sequence has been exceeded. No page token returned."
         ):
             # Returning None will discontinue pagination.
