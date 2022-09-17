@@ -35,15 +35,16 @@ class PardotStream(HttpStream, ABC):
         pardot_warning_header = response.headers.get("Pardot-Warning")
         if next_page_token and len(next_page_token) > 0:
             return {"nextPageToken": next_page_token}
-        elif pardot_warning_header is not None and isinstance(pardot_warning_header, str) and pardot_warning_header.startswith("203;"):
+        elif (
+            pardot_warning_header is not None
+            and isinstance(pardot_warning_header, str)
+            and pardot_warning_header.find("Record count for nextPageToken sequence has been exceeded.") != -1
+        ):
             # There's a pardot warning header when attempting to read more than 100,000 records which will stop using the page token.
             # Return a reset setting to know that we should make the next request based on state instead of the page token.
             return {"reset_page_token": True}
         else:
             # Returning None will discontinue pagination.
-            # TODO: Remove this debug check, but it's useful for when debugging if we've gone above 100,000 or actually reached
-            # the end of the stream.
-            print(f"pardot_warning_header: {pardot_warning_header}")
             return None
 
     def request_headers(
