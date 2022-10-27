@@ -48,6 +48,12 @@
         "type": "string",
         "default": "refresh_token",
         "examples": ["2021-07-25T00:00:00Z"]
+      },
+      "max_api_requests": {
+        "description": "The maximum number of api requests per airbyte run. Use in combination with frequency to make sure to not surpass daily limit (aprox. 150,000 requests per day).",
+        "type": "integer",
+        "default": "10000",
+        "examples": ["10000"]
       }
     }
   }

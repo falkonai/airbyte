@@ -22,9 +22,10 @@ class PardotStream(HttpStream, ABC):
     transformer: TypeTransformer = TypeTransformer(TransformConfig.DefaultSchemaNormalization)
     limit = 1000
 
-    def __init__(self, config: Dict, **kwargs):
+    def __init__(self, config: Dict, api_counter: Counter, **kwargs):
         super().__init__(**kwargs)
         self.config = config
+        self._api_counter = api_counter
 
     def _is_page_token_available(self, next_page_token: Optional[Mapping[str, Any]]):
         return next_page_token is not None and not next_page_token.get("reset_page_token", False)
@@ -33,6 +34,9 @@ class PardotStream(HttpStream, ABC):
         results = response.json()
         next_page_token = results.get("nextPageToken")
         pardot_warning_header = response.headers.get("Pardot-Warning")
+        max_api_requests = self.config["max_api_requests"] or 150000
+        if self._api_counter.value >= max_api_requests:
+            return None
         if next_page_token and len(next_page_token) > 0:
             return {"nextPageToken": next_page_token}
         elif (

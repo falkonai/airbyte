@@ -4,6 +4,8 @@
 
 import requests
 from airbyte_cdk.sources.streams.http.rate_limiting import default_backoff_handler
+from .thread_safe_counter import Counter
+from typing import Optional
 
 
 class Pardot:
@@ -18,6 +20,7 @@ class Pardot:
         start_date: str = None,
         api_type: str = None,
         pardot_business_unit_id: str = None,
+        api_counter: Optional[Counter] = None,
     ):
         self.api_type = api_type.upper() if api_type else None
         self.grant_type = grant_type
@@ -31,6 +34,7 @@ class Pardot:
         self.is_sandbox = is_sandbox is True or (isinstance(is_sandbox, str) and is_sandbox.lower() == "true")
         self.start_date = start_date
         self.pardot_business_unit_id = pardot_business_unit_id
+        self.api_counter = api_counter
 
     def login(self):
         login_url = f"https://{'test' if self.is_sandbox else 'login'}.salesforce.com/services/oauth2/token"
@@ -57,5 +61,6 @@ class Pardot:
         elif http_method == "POST":
             resp = self.session.post(url, headers=headers, data=body)
         resp.raise_for_status()
+        api_counter.increment()
 
         return resp
