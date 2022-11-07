@@ -21,7 +21,9 @@ class PardotStream(HttpStream, ABC):
     time_filter_template = "%Y-%m-%dT%H:%M:%SZ"
     primary_key = "id"
     is_integer_state = False
-    transformer: TypeTransformer = TypeTransformer(TransformConfig.DefaultSchemaNormalization)
+    transformer: TypeTransformer = TypeTransformer(
+        TransformConfig.DefaultSchemaNormalization
+    )
     limit = 1000
 
     def __init__(self, config: Dict, api_counter: Counter, **kwargs):
@@ -30,21 +32,28 @@ class PardotStream(HttpStream, ABC):
         self._api_counter = api_counter
 
     def _is_page_token_available(self, next_page_token: Optional[Mapping[str, Any]]):
-        return next_page_token is not None and not next_page_token.get("reset_page_token", False)
+        return next_page_token is not None and not next_page_token.get(
+            "reset_page_token", False
+        )
 
-    def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
+    def next_page_token(
+        self, response: requests.Response
+    ) -> Optional[Mapping[str, Any]]:
         results = response.json()
         next_page_token = results.get("nextPageToken")
         pardot_warning_header = response.headers.get("Pardot-Warning")
         max_api_requests = self.config["max_api_requests"] or 150000
-        if self._api_counter.value >= max_api_requests:
+        if self._api_counter.value() >= max_api_requests:
             return None
         if next_page_token and len(next_page_token) > 0:
             return {"nextPageToken": next_page_token}
         elif (
             pardot_warning_header is not None
             and isinstance(pardot_warning_header, str)
-            and pardot_warning_header.find("Record count for nextPageToken sequence has been exceeded.") != -1
+            and pardot_warning_header.find(
+                "Record count for nextPageToken sequence has been exceeded."
+            )
+            != -1
         ):
             # There's a pardot warning header when attempting to read more than 100,000 records which will stop using the page token.
             # Return a reset setting to know that we should make the next request based on state instead of the page token.
@@ -54,13 +63,19 @@ class PardotStream(HttpStream, ABC):
             return None
 
     def request_headers(
-        self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
+        self,
+        stream_state: Mapping[str, Any],
+        stream_slice: Mapping[str, Any] = None,
+        next_page_token: Mapping[str, Any] = None,
     ) -> Mapping[str, Any]:
         headers = {"Pardot-Business-Unit-Id": self.config["pardot_business_unit_id"]}
         return headers
 
     def request_params(
-        self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, any] = None, next_page_token: Mapping[str, Any] = None
+        self,
+        stream_state: Mapping[str, Any],
+        stream_slice: Mapping[str, any] = None,
+        next_page_token: Mapping[str, Any] = None,
     ) -> MutableMapping[str, Any]:
         schema = self.get_json_schema()
         fields = ",".join(schema["properties"].keys())
@@ -70,29 +85,51 @@ class PardotStream(HttpStream, ABC):
         else:
             start_date = self.config.get("start_date", None)
             if start_date:
-                params.update({"createdAfter": pendulum.parse(start_date, strict=False).strftime(self.time_filter_template)})
+                params.update(
+                    {
+                        "createdAfter": pendulum.parse(
+                            start_date, strict=False
+                        ).strftime(self.time_filter_template)
+                    }
+                )
 
             params.update({"limit": self.limit})
         return params
 
-    def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
+    def parse_response(
+        self, response: requests.Response, **kwargs
+    ) -> Iterable[Mapping]:
         results = response.json()
         values = results.get("values", [])
         for val in values:
             yield val
 
     def path(
-        self, stream_state: Mapping[str, Any] = None, stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
+        self,
+        stream_state: Mapping[str, Any] = None,
+        stream_slice: Mapping[str, Any] = None,
+        next_page_token: Mapping[str, Any] = None,
     ) -> str:
         return f"v{self.api_version}/objects/{self.object_name}"
 
-    def get_updated_state(self, current_stream_state: MutableMapping[str, Any], latest_record: Mapping[str, Any]) -> Mapping[str, Any]:
+    def get_updated_state(
+        self,
+        current_stream_state: MutableMapping[str, Any],
+        latest_record: Mapping[str, Any],
+    ) -> Mapping[str, Any]:
         blank_val = 0 if self.is_integer_state else ""
         return {
-            self.cursor_field: max(latest_record.get(self.cursor_field, blank_val), current_stream_state.get(self.cursor_field, blank_val))
+            self.cursor_field: max(
+                latest_record.get(self.cursor_field, blank_val),
+                current_stream_state.get(self.cursor_field, blank_val),
+            )
         }
 
-    def filter_records_newer_than_state(self, stream_state: Mapping[str, Any] = None, records_slice: Mapping[str, Any] = None) -> Iterable:
+    def filter_records_newer_than_state(
+        self,
+        stream_state: Mapping[str, Any] = None,
+        records_slice: Mapping[str, Any] = None,
+    ) -> Iterable:
         if stream_state and records_slice is not None:
             for record in records_slice:
                 if record[self.cursor_field] >= stream_state.get(self.cursor_field):
@@ -141,14 +178,23 @@ class PardotIncrementalReplicationStream(PardotStream):
     state_checkpoint_interval = 100000
 
     def request_params(
-        self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
+        self,
+        stream_state: Mapping[str, Any],
+        stream_slice: Mapping[str, Any] = None,
+        next_page_token: Mapping[str, Any] = None,
     ) -> MutableMapping[str, Any]:
-        params = super().request_params(stream_state, stream_slice=stream_slice, next_page_token=next_page_token)
+        params = super().request_params(
+            stream_state, stream_slice=stream_slice, next_page_token=next_page_token
+        )
         if not self._is_page_token_available(next_page_token):
             params.update({"orderBy": self.order_by_field})
             if self.additional_filters is not None:
                 params.update(self.additional_filters)
-            cursor_field_value = stream_state.get(self.cursor_field, None) if stream_state is not None else None
+            cursor_field_value = (
+                stream_state.get(self.cursor_field, None)
+                if stream_state is not None
+                else None
+            )
             if cursor_field_value is not None:
                 params.update({self.filter_param: cursor_field_value})
         return params
