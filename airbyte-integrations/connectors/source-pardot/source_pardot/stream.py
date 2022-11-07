@@ -11,6 +11,8 @@ from airbyte_cdk.models import SyncMode
 from airbyte_cdk.sources.streams.http import HttpStream
 from airbyte_cdk.sources.utils.transform import TransformConfig, TypeTransformer
 
+from .thread_safe_counter import Counter
+
 
 # Basic full refresh stream
 class PardotStream(HttpStream, ABC):

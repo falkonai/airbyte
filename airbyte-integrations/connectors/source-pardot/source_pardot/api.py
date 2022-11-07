@@ -61,6 +61,6 @@ class Pardot:
         elif http_method == "POST":
             resp = self.session.post(url, headers=headers, data=body)
         resp.raise_for_status()
-        api_counter.increment()
+        self.api_counter.increment()
 
         return resp
