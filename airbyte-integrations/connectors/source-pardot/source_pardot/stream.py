@@ -21,9 +21,7 @@ class PardotStream(HttpStream, ABC):
     time_filter_template = "%Y-%m-%dT%H:%M:%SZ"
     primary_key = "id"
     is_integer_state = False
-    transformer: TypeTransformer = TypeTransformer(
-        TransformConfig.DefaultSchemaNormalization
-    )
+    transformer: TypeTransformer = TypeTransformer(TransformConfig.DefaultSchemaNormalization)
     limit = 1000
 
     def __init__(self, config: Dict, api_counter: Counter, **kwargs):
@@ -32,13 +30,9 @@ class PardotStream(HttpStream, ABC):
         self._api_counter = api_counter
 
     def _is_page_token_available(self, next_page_token: Optional[Mapping[str, Any]]):
-        return next_page_token is not None and not next_page_token.get(
-            "reset_page_token", False
-        )
+        return next_page_token is not None and not next_page_token.get("reset_page_token", False)
 
-    def next_page_token(
-        self, response: requests.Response
-    ) -> Optional[Mapping[str, Any]]:
+    def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
         results = response.json()
         next_page_token = results.get("nextPageToken")
         pardot_warning_header = response.headers.get("Pardot-Warning")
@@ -50,10 +44,7 @@ class PardotStream(HttpStream, ABC):
         elif (
             pardot_warning_header is not None
             and isinstance(pardot_warning_header, str)
-            and pardot_warning_header.find(
-                "Record count for nextPageToken sequence has been exceeded."
-            )
-            != -1
+            and pardot_warning_header.find("Record count for nextPageToken sequence has been exceeded.") != -1
         ):
             # There's a pardot warning header when attempting to read more than 100,000 records which will stop using the page token.
             # Return a reset setting to know that we should make the next request based on state instead of the page token.
@@ -84,21 +75,13 @@ class PardotStream(HttpStream, ABC):
             params.update(**next_page_token)
         else:
             start_date = self.config.get("start_date", None)
-            if start_date:
-                params.update(
-                    {
-                        "createdAfter": pendulum.parse(
-                            start_date, strict=False
-                        ).strftime(self.time_filter_template)
-                    }
-                )
+            if start_date and self.cursor_field == "createdAfter":
+                params.update({"createdAfter": pendulum.parse(start_date, strict=False).strftime(self.time_filter_template)})
 
             params.update({"limit": self.limit})
         return params
 
-    def parse_response(
-        self, response: requests.Response, **kwargs
-    ) -> Iterable[Mapping]:
+    def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
         results = response.json()
         values = results.get("values", [])
         for val in values:
@@ -183,18 +166,12 @@ class PardotIncrementalReplicationStream(PardotStream):
         stream_slice: Mapping[str, Any] = None,
         next_page_token: Mapping[str, Any] = None,
     ) -> MutableMapping[str, Any]:
-        params = super().request_params(
-            stream_state, stream_slice=stream_slice, next_page_token=next_page_token
-        )
+        params = super().request_params(stream_state, stream_slice=stream_slice, next_page_token=next_page_token)
         if not self._is_page_token_available(next_page_token):
             params.update({"orderBy": self.order_by_field})
             if self.additional_filters is not None:
                 params.update(self.additional_filters)
-            cursor_field_value = (
-                stream_state.get(self.cursor_field, None)
-                if stream_state is not None
-                else None
-            )
+            cursor_field_value = stream_state.get(self.cursor_field, None) if stream_state is not None else None
             if cursor_field_value is not None:
                 params.update({self.filter_param: cursor_field_value})
         return params
