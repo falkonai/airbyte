@@ -37,7 +37,8 @@ class PardotStream(HttpStream, ABC):
         next_page_token = results.get("nextPageToken")
         pardot_warning_header = response.headers.get("Pardot-Warning")
         max_api_requests = self.config["max_api_requests"] or 150000
-        if self._api_counter.value() >= max_api_requests:
+        value = self._api_counter.value()
+        if value >= max_api_requests:
             return None
         if next_page_token and len(next_page_token) > 0:
             return {"nextPageToken": next_page_token}
@@ -80,6 +81,11 @@ class PardotStream(HttpStream, ABC):
 
             params.update({"limit": self.limit})
         return params
+
+    def _send_request(self, request: requests.PreparedRequest, request_kwargs: Mapping[str, Any]) -> requests.Response:
+        ret = super()._send_request(request=request, request_kwargs=request_kwargs)
+        self._api_counter.increment()
+        return ret
 
     def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
         results = response.json()

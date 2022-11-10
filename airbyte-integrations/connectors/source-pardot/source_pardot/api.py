@@ -34,21 +34,15 @@ class Pardot:
         self.access_token = None
         self.instance_url = None
         self.session = requests.Session()
-        self.is_sandbox = is_sandbox is True or (
-            isinstance(is_sandbox, str) and is_sandbox.lower() == "true"
-        )
+        self.is_sandbox = is_sandbox is True or (isinstance(is_sandbox, str) and is_sandbox.lower() == "true")
         self.start_date = start_date
         self.pardot_business_unit_id = pardot_business_unit_id
         self.api_counter = api_counter
-        self.max_api_requests = (
-            max_api_requests if max_api_requests is not None else 150000
-        )
+        self.max_api_requests = max_api_requests if max_api_requests is not None else 150000
 
     def login(self):
         login_url = f"https://{'test' if self.is_sandbox else 'login'}.salesforce.com/services/oauth2/token"
-        token_name = (
-            "refresh_token" if self.grant_type == "refresh_token" else "assertion"
-        )
+        token_name = "refresh_token" if self.grant_type == "refresh_token" else "assertion"
         login_body = {
             "grant_type": self.grant_type,
             "client_id": self.client_id,
@@ -81,7 +75,8 @@ class Pardot:
             resp = self.session.get(url, headers=headers, stream=stream, params=params)
         elif http_method == "POST":
             resp = self.session.post(url, headers=headers, data=body)
+        if self.api_counter is not None:
+            self.api_counter.increment()
         resp.raise_for_status()
-        self.api_counter.increment()
 
         return resp
