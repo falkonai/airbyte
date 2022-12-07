@@ -8,6 +8,7 @@ from typing import Any, Dict, Iterable, List, Mapping, MutableMapping, Optional
 import pendulum
 import requests
 from airbyte_cdk.models import SyncMode
+from airbyte_cdk.sources.streams import IncrementalMixin
 from airbyte_cdk.sources.streams.http import HttpStream
 from airbyte_cdk.sources.utils.transform import TransformConfig, TypeTransformer
 
@@ -18,7 +19,7 @@ from .thread_safe_counter import Counter
 class PardotStream(HttpStream, ABC):
     url_base = "https://pi.pardot.com/api/"
     api_version = "5"
-    time_filter_template = "%Y-%m-%dT%H:%M:%SZ"
+    time_filter_template = "%Y-%m-%dT%H:%M:%S+00:00"
     primary_key = "id"
     is_integer_state = False
     transformer: TypeTransformer = TypeTransformer(TransformConfig.DefaultSchemaNormalization)
@@ -36,7 +37,7 @@ class PardotStream(HttpStream, ABC):
         results = response.json()
         next_page_token = results.get("nextPageToken")
         pardot_warning_header = response.headers.get("Pardot-Warning")
-        max_api_requests = self.config["max_api_requests"] or 150000
+        max_api_requests = self.config["max_api_requests"] or 5000
         value = self._api_counter.value()
         if value >= max_api_requests:
             return None
@@ -76,8 +77,8 @@ class PardotStream(HttpStream, ABC):
             params.update(**next_page_token)
         else:
             start_date = self.config.get("start_date", None)
-            if start_date and self.cursor_field == "createdAfter":
-                params.update({"createdAfter": pendulum.parse(start_date, strict=False).strftime(self.time_filter_template)})
+            if start_date and self.filter_param in {"createdAtAfter", "updatedAtAfter", "sentAtAfter"}:
+                params.update({self.filter_param: pendulum.parse(start_date, strict=False).strftime(self.time_filter_template)})
 
             params.update({"limit": self.limit})
         return params
@@ -180,6 +181,14 @@ class PardotIncrementalReplicationStream(PardotStream):
             cursor_field_value = stream_state.get(self.cursor_field, None) if stream_state is not None else None
             if cursor_field_value is not None:
                 params.update({self.filter_param: cursor_field_value})
+
+            # Helps migrate from "id" based state that switched to a date based filter.
+            id_field_value = stream_state.get("id", None) if stream_state is not None else None
+            if id_field_value is not None and self.cursor_field != "id":
+                if self.filter_param in params:
+                    del params[self.filter_param]
+                params.update({"idGreaterThan": id_field_value})
+
         return params
 
 
@@ -191,9 +200,6 @@ class VisitorActivities(PardotIncrementalReplicationStream):
 
     use_cache = True
     object_name = "visitor-activities"
-    cursor_field = "id"
-    filter_param = "idGreaterThan"
-    is_integer_state = True
 
 
 class VisitorPageViews(PardotIncrementalReplicationStream):
@@ -203,9 +209,8 @@ class VisitorPageViews(PardotIncrementalReplicationStream):
 
     use_cache = True
     object_name = "visitor-page-views"
-    cursor_field = "id"
-    filter_param = "idGreaterThan"
-    is_integer_state = True
+    cursor_field = "createdAt"
+    filter_param = "createdAtAfter"
 
 
 class Lists(PardotIncrementalReplicationStream):
@@ -247,10 +252,7 @@ class Campaigns(PardotIncrementalReplicationStream):
     API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/campaign-v5.html
     """
 
-    cursor_field = "id"
-    filter_param = "idGreaterThan"
     object_name = "campaigns"
-    is_integer_state = True
 
 
 class ListMemberships(PardotIncrementalReplicationStream):
@@ -258,10 +260,7 @@ class ListMemberships(PardotIncrementalReplicationStream):
     API documentation: https://developer.salesforce.com/docs/marketing/pardot/guide/list-membership-v5.html
     """
 
-    cursor_field = "id"
-    filter_param = "idGreaterThan"
     object_name = "list-memberships"
-    is_integer_state = True
 
 
 class Emails(PardotIncrementalReplicationStream):
@@ -270,8 +269,9 @@ class Emails(PardotIncrementalReplicationStream):
     """
 
     object_name = "emails"
-    cursor_field = "sentAt"
-    filter_param = "sentAtAfter"
+    cursor_field = "id"
+    filter_param = "idGreaterThan"
+    is_integer_state = True
 
 
 class Visits(PardotIncrementalReplicationStream):
@@ -280,6 +280,3 @@ class Visits(PardotIncrementalReplicationStream):
     """
 
     object_name = "visits"
-    filter_param = "idGreaterThan"
-    cursor_field = "id"
-    is_integer_state = True

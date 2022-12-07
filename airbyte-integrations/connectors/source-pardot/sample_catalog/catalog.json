@@ -5,7 +5,7 @@
       "destination_sync_mode": "overwrite",
       "stream": {
         "name": "visits",
-        "supported_sync_modes": ["full_refresh", "incremental"],
+        "supported_sync_modes": ["incremental"],
         "source_defined_cursor": false,
         "json_schema": {}
       }
