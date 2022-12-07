@@ -135,8 +135,9 @@ class ProspectAccounts(PardotStream):
     """
 
     object_name = "prospect-accounts"
-    cursor_field = "createdAt"
-    filter_param = "createdAtAfter"
+    cursor_field = "id"
+    filter_param = "idGreaterThan"
+    is_integer_state = True
 
 
 class Opportunities(PardotStream):
