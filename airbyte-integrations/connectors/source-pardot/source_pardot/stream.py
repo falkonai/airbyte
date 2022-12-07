@@ -166,7 +166,7 @@ class PardotIncrementalReplicationStream(PardotStream):
     cursor_field = "updatedAt"
     filter_param = "updatedAtAfter"
     additional_filters: Optional[Mapping[str, Any]] = None
-    state_checkpoint_interval = 100000
+    state_checkpoint_interval = 1000
 
     def request_params(
         self,
