@@ -168,7 +168,9 @@ class PardotIncrementalReplicationStream(PardotStream, IncrementalMixin):
             if self.additional_filters is not None:
                 params.update(self.additional_filters)
             cursor_field_value = stream_state.get(self.cursor_field, None) if stream_state is not None else None
-            if cursor_field_value is not None:
+            if self._cursor_value is not None:
+                params.update({self.filter_param: self._cursor_value})
+            elif cursor_field_value is not None:
                 params.update({self.filter_param: cursor_field_value})
 
             # Helps migrate from "id" based state that switched to a date based filter.
