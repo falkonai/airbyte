@@ -102,19 +102,6 @@ class PardotStream(HttpStream, ABC):
     ) -> str:
         return f"v{self.api_version}/objects/{self.object_name}"
 
-    def get_updated_state(
-        self,
-        current_stream_state: MutableMapping[str, Any],
-        latest_record: Mapping[str, Any],
-    ) -> Mapping[str, Any]:
-        blank_val = 0 if self.is_integer_state else ""
-        return {
-            self.cursor_field: max(
-                latest_record.get(self.cursor_field, blank_val),
-                current_stream_state.get(self.cursor_field, blank_val),
-            )
-        }
-
     def filter_records_newer_than_state(
         self,
         stream_state: Mapping[str, Any] = None,
@@ -161,7 +148,7 @@ class Users(PardotStream):
 
 
 # PardotIncrementalReplicationStream
-class PardotIncrementalReplicationStream(PardotStream):
+class PardotIncrementalReplicationStream(PardotStream, IncrementalMixin):
     order_by_field = "id"
     cursor_field = "updatedAt"
     filter_param = "updatedAtAfter"
@@ -191,6 +178,31 @@ class PardotIncrementalReplicationStream(PardotStream):
                 params.update({"idGreaterThan": id_field_value})
 
         return params
+
+    @property
+    def state(self) -> Mapping[str, Any]:
+        return {self.cursor_field: str(self._cursor_value)}
+
+    @state.setter
+    def state(self, value: Mapping[str, Any]):
+        self._cursor_value = value[self.cursor_field]
+
+    def read_records(
+        self,
+        sync_mode: SyncMode,
+        cursor_field: List[str] = None,
+        stream_slice: Mapping[str, Any] = None,
+        stream_state: Mapping[str, Any] = None,
+    ) -> Iterable[Mapping[str, Any]]:
+        records = super().read(sync_mode=sync_mode, cursor_field=cursor_field, stream_slice=stream_slice, stream_state=stream_state)
+        for record in records:
+            blank_val = 0 if self.is_integer_state else ""
+            self._cursor_value = (
+                max(record.get(self.cursor_field, blank_val), self._cursor_value)
+                if self._cursor_value is not None
+                else record.get(self.cursor_field, blank_val)
+            )
+            yield record
 
 
 class VisitorActivities(PardotIncrementalReplicationStream):
