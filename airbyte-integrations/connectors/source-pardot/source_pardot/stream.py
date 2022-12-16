@@ -184,7 +184,7 @@ class PardotIncrementalReplicationStream(PardotStream, IncrementalMixin):
 
     @property
     def state(self) -> Mapping[str, Any]:
-        return {self.cursor_field: str(self._cursor_value)}
+        return {self.cursor_field: self._cursor_value}
 
     @state.setter
     def state(self, value: Mapping[str, Any]):
@@ -201,11 +201,23 @@ class PardotIncrementalReplicationStream(PardotStream, IncrementalMixin):
         for record in records:
             blank_val = 0 if self.is_integer_state else ""
             self._cursor_value = (
-                max(record.get(self.cursor_field, blank_val), self._cursor_value)
+                max(record.get(self.cursor_field, blank_val), self._cursor_value if not self.is_integer_state else int(self._cursor_value))
                 if self._cursor_value is not None
                 else record.get(self.cursor_field, blank_val)
             )
             yield record
+
+    def filter_records_newer_than_state(
+        self,
+        stream_state: Mapping[str, Any] = None,
+        records_slice: Mapping[str, Any] = None,
+    ) -> Iterable:
+        if self._cursor_value is not None and records_slice is not None:
+            for record in records_slice:
+                if record[self.cursor_field] >= self._cursor_value:
+                    yield record
+        elif records_slice is not None:
+            yield from records_slice
 
 
 class VisitorActivities(PardotIncrementalReplicationStream):
