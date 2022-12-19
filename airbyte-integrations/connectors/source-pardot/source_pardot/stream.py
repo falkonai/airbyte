@@ -237,8 +237,9 @@ class VisitorPageViews(PardotIncrementalReplicationStream):
 
     use_cache = True
     object_name = "visitor-page-views"
-    cursor_field = "createdAt"
-    filter_param = "createdAtAfter"
+    cursor_field = "id"
+    filter_param = "idGreaterThan"
+    is_integer_state = True
 
 
 class Lists(PardotIncrementalReplicationStream):
