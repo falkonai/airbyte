@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "sequenceid": { "type": ["null", "integer"] },
+    "sequencename": { "type": ["null", "string"] },
+    "sequencetype": { "type": ["null", "string"] },
+    "totalrows": { "type": ["null", "integer"] },
+    "emails": { "type": ["null", "integer"] },
+    "prospectsenrolled": { "type": ["null", "integer"] },
+    "sequenceidentifier": { "type": ["null", "string"] },
+    "reportdate": { "type": ["null", "string"], "format": "date-time" },
+    "userid": { "type": ["null", "integer"] },
+    "meetingsbooked": { "type": ["null", "integer"] },
+    "emailssent": { "type": ["null", "integer"] },
+    "opened": { "type": ["null", "integer"] },
+    "clicked": { "type": ["null", "integer"] },
+    "replied": { "type": ["null", "integer"] },
+    "bounced": { "type": ["null", "integer"] },
+    "optouts": { "type": ["null", "integer"] }
+  }
+}

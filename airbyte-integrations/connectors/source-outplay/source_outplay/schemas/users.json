@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "userrole": {
+      "type": ["integer"]
+    },
+    "userid": {
+      "type": ["integer"]
+    },
+    "emailid": {
+      "type": ["null", "string"]
+    },
+    "firstname": {
+      "type": ["null", "string"]
+    },
+    "lastname": {
+      "type": ["null", "string"]
+    },
+    "title": {
+      "type": ["null", "string"]
+    },
+    "displaypicture": {
+      "type": ["null", "string"]
+    },
+    "registereddate": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "accountusertype": {
+      "type": ["null", "integer"]
+    }
+  }
+}

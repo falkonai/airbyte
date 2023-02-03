@@ -1,0 +1,14 @@
+{
+  "streams": [
+    {
+      "sync_mode": "incremental",
+      "destination_sync_mode": "overwrite",
+      "stream": {
+        "name": "sequence_reports",
+        "supported_sync_modes": ["incremental"],
+        "source_defined_cursor": false,
+        "json_schema": {}
+      }
+    }
+  ]
+}
