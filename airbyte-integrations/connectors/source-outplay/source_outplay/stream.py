@@ -145,6 +145,7 @@ class Users(OutplayStream):
     http_method = "GET"
     object_name = "team"
     cursor_field = "userid"
+    primary_key = "userid"
 
 
 class Accounts(OutplayStream):
@@ -154,6 +155,7 @@ class Accounts(OutplayStream):
 
     http_method = "POST"
     object_name = "prospectaccount/search"
+    primary_key = "accountid"
     cursor_field = "accountid"
     cursor_field_condition = "gte"
 
@@ -165,6 +167,7 @@ class Sequences(OutplayStream):
 
     http_method = "POST"
     object_name = "sequence/search"
+    primary_key = "sequenceid"
     cursor_field = "sequenceid"
     cursor_field_condition = "gte"
 
@@ -185,7 +188,7 @@ class OutplayIncrementalReplicationStream(OutplayStream, IncrementalMixin):
         next_page_token: Mapping[str, Any] = None,
     ) -> MutableMapping[str, Any]:
         params = super().request_body_json(stream_state, stream_slice=stream_slice, next_page_token=next_page_token)
-        params["orderBy"] = self.cursor_field
+        params["orderBy"] = self.cursor_field.lower()
 
         cursor_field_value = stream_state.get(self.cursor_field, None) if stream_state is not None else None
         if self._cursor_value is not None or cursor_field_value is not None:
@@ -212,11 +215,9 @@ class OutplayIncrementalReplicationStream(OutplayStream, IncrementalMixin):
     ) -> Iterable[Mapping[str, Any]]:
         records = super().read_records(sync_mode=sync_mode, cursor_field=cursor_field, stream_slice=stream_slice, stream_state=stream_state)
         for record in records:
-            blank_val = 0 if self.is_integer_state else ""
+            record_date_value = retrieve_date_from_mapping(record, self.cursor_field.lower())
             self._cursor_value = (
-                max(record.get(self.cursor_field, blank_val), self._cursor_value if not self.is_integer_state else int(self._cursor_value))
-                if self._cursor_value is not None
-                else record.get(self.cursor_field, blank_val)
+                max(record_date_value or date.min, self._cursor_value) if self._cursor_value is not None else record_date_value or date.min
             )
             yield record
 
@@ -227,7 +228,7 @@ class OutplayIncrementalReplicationStream(OutplayStream, IncrementalMixin):
     ) -> Iterable:
         if self._cursor_value is not None and records_slice is not None:
             for record in records_slice:
-                if record[self.cursor_field] >= self._cursor_value:
+                if record[self.cursor_field.lower()] >= self._cursor_value:
                     yield record
         elif records_slice is not None:
             yield from records_slice
@@ -240,6 +241,7 @@ class Prospects(OutplayIncrementalReplicationStream):
 
     use_cache = True
     object_name = "prospect/search"
+    primary_key = "prospectid"
 
 
 # OutplayReportDateIncrementalReplicationStream
@@ -375,3 +377,4 @@ class SequenceReports(OutplayReportDateIncrementalReplicationStream):
 
     use_cache = True
     object_name = "reports/sequencereport"
+    primary_key = ["sequenceid", "reportdate"]
