@@ -187,7 +187,7 @@ class OutplayIncrementalReplicationStream(OutplayStream, IncrementalMixin):
         next_page_token: Mapping[str, Any] = None,
     ) -> MutableMapping[str, Any]:
         params = super().request_body_json(stream_state, stream_slice=stream_slice, next_page_token=next_page_token)
-        params["orderBy"] = self.cursor_field.lower()
+        params["orderBy"] = self.cursor_field
 
         cursor_field_value = stream_state.get(self.cursor_field, None) if stream_state is not None else None
         if self._cursor_value is not None or cursor_field_value is not None:
@@ -214,13 +214,13 @@ class OutplayIncrementalReplicationStream(OutplayStream, IncrementalMixin):
     ) -> Iterable[Mapping[str, Any]]:
         records = super().read_records(sync_mode=sync_mode, cursor_field=cursor_field, stream_slice=stream_slice, stream_state=stream_state)
         for record in records:
-            record_value = record.get(self.cursor_field.lower(), 0)
+            record_value = record.get(self.cursor_field, 0)
             self._cursor_value = max(record_value, self._cursor_value) if self._cursor_value is not None else record_value
             yield record
 
     def get_updated_state(self, current_stream_state: MutableMapping[str, Any], latest_record: Mapping[str, Any]) -> Mapping[str, Any]:
-        record_value = latest_record.get(self.cursor_field.lower(), 0)
-        cursor_field_value = current_stream_state.get(self.cursor_field.lower(), 0)
+        record_value = latest_record.get(self.cursor_field, 0)
+        cursor_field_value = current_stream_state.get(self.cursor_field, 0)
         return {self.cursor_field: max(record_value, cursor_field_value)}
 
     def filter_records_newer_than_state(
@@ -230,7 +230,7 @@ class OutplayIncrementalReplicationStream(OutplayStream, IncrementalMixin):
     ) -> Iterable:
         if self._cursor_value is not None and records_slice is not None:
             for record in records_slice:
-                if record[self.cursor_field.lower()] >= self._cursor_value:
+                if record[self.cursor_field] >= self._cursor_value:
                     yield record
         elif records_slice is not None:
             yield from records_slice
@@ -250,7 +250,7 @@ class Prospects(OutplayIncrementalReplicationStream):
 # OutplayReportDateIncrementalReplicationStream
 class OutplayReportDateIncrementalReplicationStream(OutplayStream, IncrementalMixin):
     http_method = "GET"
-    cursor_field = "ReportDate"
+    cursor_field = "reportdate"
     date_filter_template = "%Y-%m-%d"
     additional_filters: Optional[Mapping[str, Any]] = None
     state_checkpoint_interval = 1000
@@ -342,15 +342,15 @@ class OutplayReportDateIncrementalReplicationStream(OutplayStream, IncrementalMi
     ) -> Iterable[Mapping[str, Any]]:
         records = super().read_records(sync_mode=sync_mode, cursor_field=cursor_field, stream_slice=stream_slice, stream_state=stream_state)
         for record in records:
-            record_date_value = retrieve_date_from_mapping(record, self.cursor_field.lower())
+            record_date_value = retrieve_date_from_mapping(record, self.cursor_field)
             cursor_value_date = pendulum.parse(self._cursor_value, strict=False).date() if self._cursor_value is not None else None
             max_date = max(record_date_value, cursor_value_date) if cursor_value_date is not None else record_date_value
             self._cursor_value = max_date.strftime(self.date_filter_template) if max_date is not None else None
             yield record
 
     def get_updated_state(self, current_stream_state: MutableMapping[str, Any], latest_record: Mapping[str, Any]) -> Mapping[str, Any]:
-        record_date_value = retrieve_date_from_mapping(latest_record, self.cursor_field.lower())
-        cursor_field_date_value = retrieve_date_from_mapping(current_stream_state, self.cursor_field.lower())
+        record_date_value = retrieve_date_from_mapping(latest_record, self.cursor_field)
+        cursor_field_date_value = retrieve_date_from_mapping(current_stream_state, self.cursor_field)
         return {
             self.cursor_field: max(record_date_value, cursor_field_date_value)
             if record_date_value is not None and cursor_field_date_value is not None
@@ -366,7 +366,7 @@ class OutplayReportDateIncrementalReplicationStream(OutplayStream, IncrementalMi
             for record in records_slice:
                 if (
                     self._cursor_value is not None
-                    or record[self.cursor_field.lower()] >= pendulum.parse(self._cursor_value, strict=False).date()
+                    or record[self.cursor_field] >= pendulum.parse(self._cursor_value, strict=False).date()
                 ):
                     yield record
         elif records_slice is not None:

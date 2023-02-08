@@ -13,7 +13,6 @@
       "location": {
         "description": "The location that can be found when creating credentials in Outplay",
         "type": "string",
-        "airbyte_secret": false,
         "default": "us4",
         "examples": ["us4"]
       },
