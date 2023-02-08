@@ -175,11 +175,10 @@ class Sequences(OutplayStream):
 # OutplayIncrementalReplicationStream
 class OutplayIncrementalReplicationStream(OutplayStream, IncrementalMixin):
     http_method = "POST"
-    cursor_field = "CreatedDate"
     cursor_field_condition = "gte"
     additional_filters: Optional[Mapping[str, Any]] = None
     state_checkpoint_interval = 1000
-    _cursor_value: Optional[Any] = None
+    _cursor_value: Optional[int] = None
 
     def request_body_json(
         self,
@@ -193,7 +192,7 @@ class OutplayIncrementalReplicationStream(OutplayStream, IncrementalMixin):
         cursor_field_value = stream_state.get(self.cursor_field, None) if stream_state is not None else None
         if self._cursor_value is not None or cursor_field_value is not None:
             params["fieldname"] = self.cursor_field
-            params["fieldvalue"] = self._cursor_value if self._cursor_value is not None else cursor_field_value
+            params["fieldvalue"] = int(self._cursor_value) if self._cursor_value is not None else cursor_field_value
             params["fieldcondition"] = self.cursor_field_condition
 
         return params
@@ -215,11 +214,14 @@ class OutplayIncrementalReplicationStream(OutplayStream, IncrementalMixin):
     ) -> Iterable[Mapping[str, Any]]:
         records = super().read_records(sync_mode=sync_mode, cursor_field=cursor_field, stream_slice=stream_slice, stream_state=stream_state)
         for record in records:
-            record_date_value = retrieve_date_from_mapping(record, self.cursor_field.lower())
-            self._cursor_value = (
-                max(record_date_value or date.min, self._cursor_value) if self._cursor_value is not None else record_date_value or date.min
-            )
+            record_value = record.get(self.cursor_field.lower(), 0)
+            self._cursor_value = max(record_value, self._cursor_value) if self._cursor_value is not None else record_value
             yield record
+
+    def get_updated_state(self, current_stream_state: MutableMapping[str, Any], latest_record: Mapping[str, Any]) -> Mapping[str, Any]:
+        record_value = latest_record.get(self.cursor_field.lower(), 0)
+        cursor_field_value = current_stream_state.get(self.cursor_field.lower(), 0)
+        return {self.cursor_field: max(record_value, cursor_field_value)}
 
     def filter_records_newer_than_state(
         self,
@@ -242,6 +244,7 @@ class Prospects(OutplayIncrementalReplicationStream):
     use_cache = True
     object_name = "prospect/search"
     primary_key = "prospectid"
+    cursor_field = "prospectid"
 
 
 # OutplayReportDateIncrementalReplicationStream
