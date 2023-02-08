@@ -2,60 +2,36 @@
   "streams": [
     {
       "stream": {
-        "name": "email_clicks",
+        "name": "users",
         "json_schema": {},
         "supported_sync_modes": ["full_refresh"],
         "source_defined_cursor": true,
-        "default_cursor_field": ["id"],
-        "source_defined_primary_key": [["id"]]
+        "default_cursor_field": ["userid"],
+        "source_defined_primary_key": [["userid"]]
       },
       "sync_mode": "full_refresh",
       "destination_sync_mode": "overwrite"
     },
     {
       "stream": {
-        "name": "campaigns",
+        "name": "accounts",
         "json_schema": {},
         "supported_sync_modes": ["full_refresh"],
         "source_defined_cursor": true,
-        "default_cursor_field": ["id"],
-        "source_defined_primary_key": [["id"]]
+        "default_cursor_field": ["accountid"],
+        "source_defined_primary_key": [["accountid"]]
       },
       "sync_mode": "full_refresh",
       "destination_sync_mode": "overwrite"
     },
     {
       "stream": {
-        "name": "list_membership",
+        "name": "sequences",
         "json_schema": {},
         "supported_sync_modes": ["full_refresh"],
         "source_defined_cursor": true,
-        "default_cursor_field": ["updated_at"],
-        "source_defined_primary_key": [["id"]]
-      },
-      "sync_mode": "full_refresh",
-      "destination_sync_mode": "overwrite"
-    },
-    {
-      "stream": {
-        "name": "lists",
-        "json_schema": {},
-        "supported_sync_modes": ["full_refresh"],
-        "source_defined_cursor": true,
-        "default_cursor_field": ["updated_at"],
-        "source_defined_primary_key": [["id"]]
-      },
-      "sync_mode": "full_refresh",
-      "destination_sync_mode": "overwrite"
-    },
-    {
-      "stream": {
-        "name": "prospect_accounts",
-        "json_schema": {},
-        "supported_sync_modes": ["full_refresh"],
-        "source_defined_cursor": true,
-        "default_cursor_field": ["updated_at"],
-        "source_defined_primary_key": [["id"]]
+        "default_cursor_field": ["sequenceid"],
+        "source_defined_primary_key": [["sequenceid"]]
       },
       "sync_mode": "full_refresh",
       "destination_sync_mode": "overwrite"
@@ -64,60 +40,24 @@
       "stream": {
         "name": "prospects",
         "json_schema": {},
-        "supported_sync_modes": ["full_refresh"],
+        "supported_sync_modes": ["incremental"],
         "source_defined_cursor": true,
-        "default_cursor_field": ["updated_at"],
-        "source_defined_primary_key": [["id"]]
+        "default_cursor_field": ["CreatedDate"],
+        "source_defined_primary_key": [["prospectid"]]
       },
-      "sync_mode": "full_refresh",
+      "sync_mode": "incremental",
       "destination_sync_mode": "overwrite"
     },
     {
       "stream": {
-        "name": "users",
+        "name": "sequence_reports",
         "json_schema": {},
-        "supported_sync_modes": ["full_refresh"],
+        "supported_sync_modes": ["incremental"],
         "source_defined_cursor": true,
-        "default_cursor_field": ["created_at"],
-        "source_defined_primary_key": [["id"]]
+        "default_cursor_field": ["ReportDate"],
+        "source_defined_primary_key": [["ReportDate"]]
       },
-      "sync_mode": "full_refresh",
-      "destination_sync_mode": "overwrite"
-    },
-    {
-      "stream": {
-        "name": "visitor_activities",
-        "json_schema": {},
-        "supported_sync_modes": ["full_refresh"],
-        "source_defined_cursor": true,
-        "default_cursor_field": ["id"],
-        "source_defined_primary_key": [["id"]]
-      },
-      "sync_mode": "full_refresh",
-      "destination_sync_mode": "overwrite"
-    },
-    {
-      "stream": {
-        "name": "visitors",
-        "json_schema": {},
-        "supported_sync_modes": ["full_refresh"],
-        "source_defined_cursor": true,
-        "default_cursor_field": ["updated_at"],
-        "source_defined_primary_key": [["id"]]
-      },
-      "sync_mode": "full_refresh",
-      "destination_sync_mode": "overwrite"
-    },
-    {
-      "stream": {
-        "name": "visits",
-        "json_schema": {},
-        "supported_sync_modes": ["full_refresh"],
-        "source_defined_cursor": true,
-        "default_cursor_field": ["id"],
-        "source_defined_primary_key": [["id"]]
-      },
-      "sync_mode": "full_refresh",
+      "sync_mode": "incremental",
       "destination_sync_mode": "overwrite"
     }
   ]
