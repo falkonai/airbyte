@@ -203,7 +203,7 @@ class OutplayIncrementalReplicationStream(OutplayStream, IncrementalMixin):
 
     @state.setter
     def state(self, value: Mapping[str, Any]):
-        self._cursor_value = value[self.cursor_field]
+        self._cursor_value = value[self.cursor_field] if self.cursor_field in value else None
 
     def read_records(
         self,
@@ -275,7 +275,7 @@ class OutplayReportDateIncrementalReplicationStream(OutplayStream, IncrementalMi
         if next_date < pendulum.now().date():
             return {
                 "from": next_date.strftime(self.date_filter_template),
-                "to": (next_date + timedelta(days=1)).strftime(self.date_filter_template),
+                "to": next_date.strftime(self.date_filter_template),
             }
         else:
             # Returning None will discontinue pagination.
@@ -303,7 +303,7 @@ class OutplayReportDateIncrementalReplicationStream(OutplayStream, IncrementalMi
         if "from" not in params:
             params["from"] = report_date.strftime(self.date_filter_template)
         if "to" not in params:
-            params["to"] = (report_date + timedelta(days=1)).strftime(self.date_filter_template)
+            params["to"] = report_date.strftime(self.date_filter_template)
 
         params["type"] = 1
 
@@ -331,7 +331,7 @@ class OutplayReportDateIncrementalReplicationStream(OutplayStream, IncrementalMi
 
     @state.setter
     def state(self, value: Mapping[str, Any]):
-        self._cursor_value = value[self.cursor_field]
+        self._cursor_value = value[self.cursor_field] if self.cursor_field in value else None
 
     def read_records(
         self,
@@ -364,10 +364,7 @@ class OutplayReportDateIncrementalReplicationStream(OutplayStream, IncrementalMi
     ) -> Iterable:
         if self._cursor_value is not None and records_slice is not None:
             for record in records_slice:
-                if (
-                    self._cursor_value is not None
-                    or record[self.cursor_field] >= pendulum.parse(self._cursor_value, strict=False).date()
-                ):
+                if self._cursor_value is not None or record[self.cursor_field] >= pendulum.parse(self._cursor_value, strict=False).date():
                     yield record
         elif records_slice is not None:
             yield from records_slice
