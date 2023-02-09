@@ -25,6 +25,7 @@
       }
     },
     "lastcontacteddate": { "type": ["null", "string"], "format": "date-time" },
+    "createddate": { "type": ["null", "string"], "format": "date-time" },
     "owner": {
       "type": "object",
       "properties": {
