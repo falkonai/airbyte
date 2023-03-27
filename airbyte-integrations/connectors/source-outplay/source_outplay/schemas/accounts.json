@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "accountid": {
+      "type": ["integer"]
+    },
+    "stage": {
+      "type": ["null", "string"]
+    },
+    "externalid": {
+      "type": ["null", "integer"]
+    },
+    "name": {
+      "type": ["null", "string"]
+    },
+    "description": {
+      "type": ["null", "string"]
+    },
+    "employeecount": {
+      "type": ["null", "integer"]
+    },
+    "industrytype": {
+      "type": ["null", "string"]
+    },
+    "linkedin": {
+      "type": ["null", "string"]
+    },
+    "twitter": {
+      "type": ["null", "string"]
+    },
+    "foundedyear": {
+      "type": ["null", "integer"]
+    },
+    "city": {
+      "type": ["null", "string"]
+    },
+    "website": {
+      "type": ["null", "string"]
+    }
+  }
+}

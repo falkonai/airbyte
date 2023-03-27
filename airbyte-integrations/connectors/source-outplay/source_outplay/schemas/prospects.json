@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "prospectid": { "type": ["null", "integer"] },
+    "emailid": { "type": ["null", "string"] },
+    "firstname": { "type": ["null", "string"] },
+    "lastname": { "type": ["null", "string"] },
+    "phone": { "type": ["null", "string"] },
+    "designation": { "type": ["null", "string"] },
+    "city": { "type": ["null", "string"] },
+    "linkedin": { "type": ["null", "string"] },
+    "state": { "type": ["null", "string"] },
+    "country": { "type": ["null", "string"] },
+    "twitter": { "type": ["null", "string"] },
+    "facebook": { "type": ["null", "string"] },
+    "company": { "type": ["null", "string"] },
+    "prospectstate": { "type": ["null", "string"] },
+    "prospectstatus": { "type": ["null", "string"] },
+    "stage": {
+      "type": "object",
+      "properties": {
+        "id": { "type": ["null", "integer"] },
+        "name": { "type": ["null", "string"] }
+      }
+    },
+    "lastcontacteddate": { "type": ["null", "string"], "format": "date-time" },
+    "createddate": { "type": ["null", "string"], "format": "date-time" },
+    "owner": {
+      "type": "object",
+      "properties": {
+        "id": { "type": ["null", "integer"] },
+        "name": { "type": ["null", "string"] },
+        "email": { "type": ["null", "string"] }
+      }
+    },
+    "account": {
+      "type": "object",
+      "properties": {
+        "id": { "type": ["null", "integer"] },
+        "name": { "type": ["null", "string"] }
+      }
+    }
+  }
+}
