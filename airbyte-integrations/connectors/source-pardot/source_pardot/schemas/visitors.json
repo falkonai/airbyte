@@ -5,35 +5,47 @@
     "id": {
       "type": ["integer"]
     },
-    "page_view_count": {
+    "pageViewCount": {
       "type": ["null", "integer"]
     },
-    "ip_address": {
+    "ipAddress": {
       "type": ["null", "string"]
     },
     "hostname": {
       "type": ["null", "string"]
     },
-    "campaign_parameter": {
+    "mediumParameter": {
       "type": ["null", "string"]
     },
-    "medium_parameter": {
+    "sourceParameter": {
       "type": ["null", "string"]
     },
-    "source_parameter": {
+    "campaignParameter": {
       "type": ["null", "string"]
     },
-    "content_parameter": {
+    "contentParameter": {
       "type": ["null", "string"]
     },
-    "term_parameter": {
+    "termParameter": {
       "type": ["null", "string"]
     },
-    "created_at": {
+    "doNotSell": {
+      "type": ["null", "boolean"]
+    },
+    "isIdentified": {
+      "type": ["null", "boolean"]
+    },
+    "prospectId": {
+      "type": ["null", "integer"]
+    },
+    "campaignId": {
+      "type": ["null", "integer"]
+    },
+    "createdAt": {
       "type": ["null", "string"],
       "format": "date-time"
     },
-    "updated_at": {
+    "updatedAt": {
       "type": ["null", "string"],
       "format": "date-time"
     }

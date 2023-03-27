@@ -10,41 +10,62 @@ from airbyte_cdk.sources.streams import Stream
 from airbyte_cdk.sources.streams.http.auth import TokenAuthenticator
 
 from .api import Pardot
-from .stream import Campaigns, EmailClicks, ListMembership, Lists, ProspectAccounts, Prospects, Users, VisitorActivities, Visitors, Visits
+from .stream import (
+    Campaigns,
+    Emails,
+    ListEmails,
+    ListMemberships,
+    Lists,
+    Opportunities,
+    ProspectAccounts,
+    Prospects,
+    Users,
+    VisitorActivities,
+    VisitorPageViews,
+    Visitors,
+    Visits,
+)
+from .thread_safe_counter import Counter
 
 
 # Source
 class SourcePardot(AbstractSource):
+    def __init__(self):
+        self._api_counter = Counter()
+
     @staticmethod
-    def _get_pardot_object(config: Mapping[str, Any]) -> Pardot:
-        pardot = Pardot(**config)
+    def _get_pardot_object(config: Mapping[str, Any], api_counter: Counter) -> Pardot:
+        pardot = Pardot(**config, api_counter=api_counter)
         pardot.login()
         return pardot
 
     def check_connection(self, logger, config) -> Tuple[bool, any]:
         try:
-            pardot = self._get_pardot_object(config)
+            pardot = self._get_pardot_object(config, api_counter=self._api_counter)
             pardot.access_token
             return True, None
         except Exception as e:
             return False, e
 
     def streams(self, config: Mapping[str, Any]) -> List[Stream]:
-        pardot = self._get_pardot_object(config)
+        pardot = self._get_pardot_object(config, api_counter=self._api_counter)
         auth = TokenAuthenticator(pardot.access_token)
-        args = {"authenticator": auth, "config": config}
+        args = {"authenticator": auth, "config": config, "api_counter": self._api_counter}
 
         visitors = Visitors(**args)
 
         return [
-            EmailClicks(**args),
+            Emails(**args),
             Campaigns(**args),
-            ListMembership(**args),
+            ListMemberships(**args),
+            ListEmails(**args),
             Lists(**args),
             ProspectAccounts(**args),
             Prospects(**args),
             Users(**args),
+            VisitorPageViews(**args),
             VisitorActivities(**args),
             visitors,
-            Visits(parent_stream=visitors, **args),
+            Visits(**args),
+            Opportunities(**args),
         ]

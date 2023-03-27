@@ -5,7 +5,7 @@
     "id": {
       "type": ["integer"]
     },
-    "campaign_id": {
+    "campaignId": {
       "type": ["null", "integer"]
     },
     "name": {
@@ -26,15 +26,27 @@
     "status": {
       "type": ["null", "string"]
     },
-    "closed_at": {
+    "value": {
+      "type": ["null", "number"]
+    },
+    "salesforceId": {
+      "type": ["null", "string"]
+    },
+    "closedAt": {
       "type": ["null", "string"],
       "format": "date-time"
     },
-    "created_at": {
+    "createdById": {
+      "type": ["null", "integer"]
+    },
+    "updatedById": {
+      "type": ["null", "integer"]
+    },
+    "createdAt": {
       "type": ["null", "string"],
       "format": "date-time"
     },
-    "updated_at": {
+    "updatedAt": {
       "type": ["null", "string"],
       "format": "date-time"
     }

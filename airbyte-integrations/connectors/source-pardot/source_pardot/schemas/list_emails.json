@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "id": { "type": ["null", "integer"] },
+    "name": { "type": ["null", "string"] },
+    "subject": { "type": ["null", "string"] },
+    "campaignId": { "type": ["null", "integer"] },
+    "isPaused": { "type": ["null", "boolean"] },
+    "isSent": { "type": ["null", "boolean"] },
+    "isDeleted": { "type": ["null", "boolean"] },
+    "clientType": { "type": ["null", "string"] },
+    "createdById": { "type": ["null", "integer"] },
+    "updatedById": { "type": ["null", "integer"] },
+    "createdAt": { "type": ["null", "string"], "format": "date-time" },
+    "updatedAt": { "type": ["null", "string"], "format": "date-time" },
+    "sentAt": { "type": ["null", "string"], "format": "date-time" },
+    "operationalEmail": { "type": ["null", "boolean"] },
+    "emailTemplateId": { "type": ["null", "integer"] },
+    "trackerDomainId": { "type": ["null", "integer"] }
+  }
+}

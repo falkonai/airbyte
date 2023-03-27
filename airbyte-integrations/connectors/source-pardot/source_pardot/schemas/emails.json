@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "id": { "type": ["null", "integer"] },
+    "campaignId": { "type": ["null", "integer"] },
+    "clientType": { "type": ["null", "string"] },
+    "createdById": { "type": ["null", "integer"] },
+    "listId": { "type": ["null", "integer"] },
+    "listEmailId": { "type": ["null", "integer"] },
+    "name": { "type": ["null", "string"] },
+    "sentAt": { "type": ["null", "string"], "format": "date-time" },
+    "subject": { "type": ["null", "string"] }
+  }
+}

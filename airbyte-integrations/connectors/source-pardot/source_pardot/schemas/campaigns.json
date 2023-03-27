@@ -10,6 +10,29 @@
     },
     "cost": {
       "type": ["null", "integer"]
+    },
+    "isDeleted": {
+      "type": ["null", "boolean"]
+    },
+    "folderId": {
+      "type": ["null", "integer"]
+    },
+    "parentCampaignId": {
+      "type": ["null", "integer"]
+    },
+    "createdById": {
+      "type": ["null", "integer"]
+    },
+    "updatedById": {
+      "type": ["null", "integer"]
+    },
+    "createdAt": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": ["null", "string"],
+      "format": "date-time"
     }
   }
 }

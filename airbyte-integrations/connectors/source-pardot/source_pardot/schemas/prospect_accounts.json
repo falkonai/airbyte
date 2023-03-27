@@ -2,22 +2,50 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
-    "id": {
-      "type": ["integer"]
+    "id": { "type": ["null", "integer"] },
+    "name": { "type": ["null", "string"] },
+    "salesforceId": { "type": ["null", "string"] },
+    "isDeleted": { "type": ["null", "boolean"] },
+    "annualRevenue": { "type": ["null", "string"] },
+    "billingAddressOne": { "type": ["null", "string"] },
+    "billingAddressTwo": { "type": ["null", "string"] },
+    "billingCity": { "type": ["null", "string"] },
+    "billingCountry": { "type": ["null", "string"] },
+    "billingState": { "type": ["null", "string"] },
+    "billingZip": { "type": ["null", "string"] },
+    "description": { "type": ["null", "string"] },
+    "employees": { "type": ["null", "string"] },
+    "fax": { "type": ["null", "string"] },
+    "industry": { "type": ["null", "string"] },
+    "number": { "type": ["null", "string"] },
+    "ownership": { "type": ["null", "string"] },
+    "phone": { "type": ["null", "string"] },
+    "rating": { "type": ["null", "string"] },
+    "shippingAddressOne": { "type": ["null", "string"] },
+    "shippingAddressTwo": { "type": ["null", "string"] },
+    "shippingCity": { "type": ["null", "string"] },
+    "shippingCountry": { "type": ["null", "string"] },
+    "shippingState": { "type": ["null", "string"] },
+    "shippingZip": { "type": ["null", "string"] },
+    "sic": { "type": ["null", "string"] },
+    "site": { "type": ["null", "string"] },
+    "tickerSymbol": { "type": ["null", "string"] },
+    "type": { "type": ["null", "string"] },
+    "website": { "type": ["null", "string"] },
+    "assignedToId": { "type": ["null", "integer"] },
+    "createdById": {
+      "type": ["null", "integer"]
     },
-    "name": {
-      "type": ["null", "string"]
+    "updatedById": {
+      "type": ["null", "integer"]
     },
-    "updated_at": {
+    "createdAt": {
       "type": ["null", "string"],
       "format": "date-time"
     },
-    "created_at": {
+    "updatedAt": {
       "type": ["null", "string"],
       "format": "date-time"
-    },
-    "assigned_to": {
-      "type": ["null", "object"]
     }
   }
 }

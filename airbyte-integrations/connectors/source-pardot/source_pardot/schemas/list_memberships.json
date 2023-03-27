@@ -5,26 +5,29 @@
     "id": {
       "type": ["integer"]
     },
-    "prospect_id": {
+    "listId": {
       "type": ["null", "integer"]
     },
-    "url": {
+    "prospectId": {
+      "type": ["null", "integer"]
+    },
+    "optedOut": {
+      "type": ["null", "boolean"]
+    },
+    "isDeleted": {
+      "type": ["null", "boolean"]
+    },
+    "createdById": {
+      "type": ["null", "integer"]
+    },
+    "updatedById": {
+      "type": ["null", "integer"]
+    },
+    "createdAt": {
       "type": ["null", "string"],
-      "format": ""
+      "format": "date-time"
     },
-    "list_email_id": {
-      "type": ["null", "integer"]
-    },
-    "drip_program_action_id": {
-      "type": ["null", "integer"]
-    },
-    "email_template_id": {
-      "type": ["null", "integer"]
-    },
-    "tracker_redirect_id": {
-      "type": ["null", "integer"]
-    },
-    "created_at": {
+    "updatedAt": {
       "type": ["null", "string"],
       "format": "date-time"
     }
