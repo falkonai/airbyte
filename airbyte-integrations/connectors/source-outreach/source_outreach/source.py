@@ -30,6 +30,7 @@ class OutreachStream(HttpStream, ABC):
         **kwargs,
     ):
         self.start_date = start_date
+        self.authenticator = authenticator
         super().__init__(authenticator=authenticator)
 
     def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
@@ -52,6 +53,13 @@ class OutreachStream(HttpStream, ABC):
         params = {"page[size]": 100, "count": "false"}
         if next_page_token and "after" in next_page_token:
             params["page[after]"] = next_page_token["after"]
+
+        # Really just a place to handle cycling refresh tokens that has access to the state.
+        if "refresh_token" in stream_state and self.authenticator.cycling_refresh_token is None:
+            self.authenticator.refresh_token = stream_state["refresh_token"]
+        elif self.authenticator.cycling_refresh_token is not None:
+            stream_state["refresh_token"] = self.authenticator.cycling_refresh_token
+
         return params
 
     def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
@@ -121,22 +129,77 @@ class SequenceStates(IncrementalOutreachStream):
         return "sequenceStates"
 
 
+# CreatedAt incremental stream
+class CreatedAtIncrementalOutreachStream(OutreachStream, ABC):
+    @property
+    def cursor_field(self) -> str:
+        return "attributes/properties/createdAt"
+
+    def get_updated_state(self, current_stream_state: MutableMapping[str, Any], latest_record: Mapping[str, Any]) -> Mapping[str, Any]:
+        current_stream_state = current_stream_state or {}
+
+        current_stream_state_date = current_stream_state.get("createdAt", self.start_date)
+        latest_record_date = latest_record.get("attributes", {}).get("createdAt", self.start_date)
+
+        return {"createdAt": max(current_stream_state_date, latest_record_date)}
+
+    def request_params(
+        self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, any] = None, next_page_token: Mapping[str, Any] = None
+    ) -> MutableMapping[str, Any]:
+        params = super().request_params(stream_state=stream_state, stream_slice=stream_slice, next_page_token=next_page_token)
+        if "createdAt" in stream_state:
+            params["filter[createdAt]"] = stream_state["createdAt"] + "..inf"
+        return params
+
+
+class Events(CreatedAtIncrementalOutreachStream):
+    """
+    Event stream. Yields data from the GET /events endpoint.
+    See https://api.outreach.io/api/v2/docs#Events
+    """
+
+    primary_key = "id"
+
+    def path(self, **kwargs) -> str:
+        return "Events"
+
+
 class OutreachAuthenticator(Oauth2Authenticator):
     def __init__(self, redirect_uri: str, token_refresh_endpoint: str, client_id: str, client_secret: str, refresh_token: str):
         super().__init__(
             token_refresh_endpoint=token_refresh_endpoint, client_id=client_id, client_secret=client_secret, refresh_token=refresh_token
         )
         self.redirect_uri = redirect_uri
+        self.cycling_refresh_token = None
 
     def get_refresh_request_body(self) -> Mapping[str, Any]:
         payload = super().get_refresh_request_body()
         payload["redirect_uri"] = self.redirect_uri
         return payload
 
+    def refresh_access_token(self) -> Tuple[str, int]:
+        """
+        returns a tuple of (access_token, token_lifespan_in_seconds)
+        """
+        try:
+            response = requests.request(
+                method="POST",
+                url=self.token_refresh_endpoint,
+                data=self.get_refresh_request_body(),
+                headers=self.get_refresh_access_token_headers(),
+            )
+            response.raise_for_status()
+            response_json = response.json()
+            self.cycling_refresh_token = response_json["refresh_token"]
+            self.refresh_token = self.cycling_refresh_token
+            return response_json["access_token"], response_json["expires_in"]
+        except Exception as e:
+            raise Exception(f"Error while refreshing access token: {e}") from e
+
 
 # Source
 class SourceOutreach(AbstractSource):
-    def _create_authenticator(self, config):
+    def _create_authenticator(self, config) -> OutreachAuthenticator:
         return OutreachAuthenticator(
             redirect_uri=config["redirect_uri"],
             token_refresh_endpoint=_TOKEN_REFRESH_ENDPOINT,
@@ -161,4 +224,5 @@ class SourceOutreach(AbstractSource):
             Prospects(authenticator=auth, **config),
             Sequences(authenticator=auth, **config),
             SequenceStates(authenticator=auth, **config),
+            Events(authenticator=auth, **config),
         ]
