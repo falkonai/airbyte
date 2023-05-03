@@ -207,7 +207,7 @@ class DependentOutreachStream(OutreachStream, ABC):
 
         while len(self.remaining_ids) < 1 and self.dependent_api_response_json.get("links").get("next") is not None:
             url = self.dependent_api_response_json.get("links").get("next")
-            params = parse.parse_qs(parse.urlparse(next_page_url).query)
+            params = parse.parse_qs(parse.urlparse(url).query)
             if not params or "page[after]" not in params:
                 return
 
