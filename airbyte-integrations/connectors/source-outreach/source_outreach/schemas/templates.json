@@ -16,9 +16,6 @@
         "type": ["null", "string"],
         "format": "date-time"
       },
-      "bccRecipients": {
-        "type": ["null", "array"]
-      },
       "bodyHtml": {
         "type": ["null", "string"]
       },
@@ -27,9 +24,6 @@
       },
       "bounceCount": {
         "type": ["null", "integer"]
-      },
-      "ccRecipients": {
-        "type": ["null", "array"]
       },
       "clickCount": {
         "type": ["null", "string"]
@@ -80,9 +74,6 @@
       },
       "tags": {
         "type": ["null", "string"]
-      },
-      "toRecipients": {
-        "type": ["null", "array"]
       },
       "trackLinks": {
         "type": ["null", "boolean"]
