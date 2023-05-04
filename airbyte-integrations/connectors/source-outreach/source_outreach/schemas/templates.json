@@ -88,11 +88,9 @@
     },
     "relationships": {
       "type": ["null", "object"],
-      "additionalProperties": true,
       "properties": {
         "contentCategoryMemberships": {
           "type": ["null", "object"],
-          "additionalProperties": true,
           "properties": {
             "type": {
               "type": ["null", "string"]
@@ -104,7 +102,6 @@
         },
         "creator": {
           "type": ["null", "object"],
-          "additionalProperties": true,
           "properties": {
             "type": {
               "type": ["null", "string"]
@@ -116,7 +113,6 @@
         },
         "owner": {
           "type": ["null", "object"],
-          "additionalProperties": true,
           "properties": {
             "type": {
               "type": ["null", "string"]
@@ -128,7 +124,6 @@
         },
         "recipients": {
           "type": ["null", "object"],
-          "additionalProperties": true,
           "properties": {
             "type": {
               "type": ["null", "string"]
@@ -140,7 +135,6 @@
         },
         "sequenceTemplates": {
           "type": ["null", "object"],
-          "additionalProperties": true,
           "properties": {
             "type": {
               "type": ["null", "string"]
@@ -152,7 +146,6 @@
         },
         "updater": {
           "type": ["null", "object"],
-          "additionalProperties": true,
           "properties": {
             "type": {
               "type": ["null", "string"]
@@ -165,5 +158,5 @@
       }
     }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }

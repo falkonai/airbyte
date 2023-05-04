@@ -48,11 +48,9 @@
     },
     "relationships": {
       "type": ["null", "object"],
-      "additionalProperties": true,
       "properties": {
         "account": {
           "type": ["null", "object"],
-          "additionalProperties": true,
           "properties": {
             "type": {
               "type": ["null", "string"]
@@ -64,7 +62,6 @@
         },
         "call": {
           "type": ["null", "object"],
-          "additionalProperties": true,
           "properties": {
             "type": {
               "type": ["null", "string"]
@@ -76,7 +73,6 @@
         },
         "mailing": {
           "type": ["null", "object"],
-          "additionalProperties": true,
           "properties": {
             "type": {
               "type": ["null", "string"]
@@ -88,7 +84,6 @@
         },
         "opportunity": {
           "type": ["null", "object"],
-          "additionalProperties": true,
           "properties": {
             "type": {
               "type": ["null", "string"]
@@ -100,7 +95,6 @@
         },
         "prospect": {
           "type": ["null", "object"],
-          "additionalProperties": true,
           "properties": {
             "type": {
               "type": ["null", "string"]
@@ -112,7 +106,6 @@
         },
         "task": {
           "type": ["null", "object"],
-          "additionalProperties": true,
           "properties": {
             "type": {
               "type": ["null", "string"]
@@ -124,7 +117,6 @@
         },
         "user": {
           "type": ["null", "object"],
-          "additionalProperties": true,
           "properties": {
             "type": {
               "type": ["null", "string"]
@@ -137,5 +129,5 @@
       }
     }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }
