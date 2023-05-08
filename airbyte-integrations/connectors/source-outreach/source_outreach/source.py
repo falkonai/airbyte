@@ -9,8 +9,9 @@ from urllib import parse
 from urllib.parse import urljoin
 
 import requests
+from airbyte_cdk.models import SyncMode
 from airbyte_cdk.sources import AbstractSource
-from airbyte_cdk.sources.streams import Stream
+from airbyte_cdk.sources.streams import IncrementalMixin, Stream
 from airbyte_cdk.sources.streams.http import HttpStream
 from airbyte_cdk.sources.streams.http.auth.core import HttpAuthenticator
 from airbyte_cdk.sources.streams.http.auth.oauth import Oauth2Authenticator
@@ -40,16 +41,12 @@ class OutreachStream(HttpStream, ABC):
         self.config = config
         super().__init__(authenticator=authenticator, **kwargs)
 
-    def _send_request(
-        self, request: requests.PreparedRequest, request_kwargs: Mapping[str, Any]
-    ) -> requests.Response:
+    def _send_request(self, request: requests.PreparedRequest, request_kwargs: Mapping[str, Any]) -> requests.Response:
         ret = super()._send_request(request=request, request_kwargs=request_kwargs)
         self.api_counter.increment()
         return ret
 
-    def next_page_token(
-        self, response: requests.Response
-    ) -> Optional[Mapping[str, Any]]:
+    def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
         """
         Returns the token for the next page as per https://api.outreach.io/api/v2/docs#pagination.
         It uses cursor-based pagination, by sending the 'page[size]' and 'page[after]' parameters.
@@ -70,27 +67,19 @@ class OutreachStream(HttpStream, ABC):
     def request_params(
         self,
         stream_state: Mapping[str, Any],
-        stream_slice: Mapping[str, any] = None,
+        stream_slice: Mapping[str, Any] = None,
         next_page_token: Mapping[str, Any] = None,
     ) -> MutableMapping[str, Any]:
         params = {"page[size]": self.page_size, "count": "false"}
         if next_page_token and "after" in next_page_token:
             params["page[after]"] = next_page_token["after"]
 
-        # Really just a place to handle cycling refresh tokens that has access to the state.
-        if (
-            "refresh_token" in stream_state
-            and self.authenticator.cycling_refresh_token is None
-        ):
+        if "refresh_token" in stream_state and self.authenticator.cycling_refresh_token is None:
             self.authenticator.refresh_token = stream_state["refresh_token"]
-        elif self.authenticator.cycling_refresh_token is not None:
-            stream_state["refresh_token"] = self.authenticator.cycling_refresh_token
 
         return params
 
-    def parse_response(
-        self, response: requests.Response, **kwargs
-    ) -> Iterable[Mapping]:
+    def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
         data = response.json().get("data")
         if not data:
             return
@@ -98,14 +87,10 @@ class OutreachStream(HttpStream, ABC):
             relationships: Dict[str, List[int]] = dict()
             for r_type, relations in element.get("relationships").items():
                 relationships[f"{r_type}"] = []
-                if relations.get(
-                    "data"
-                ):  # Manage None and pass empty data. Some relationships only have links we do not handle these.
+                if relations.get("data"):  # Manage None and pass empty data. Some relationships only have links we do not handle these.
                     data = relations.get("data", [])
 
-                    if isinstance(
-                        data, dict
-                    ):  # Manage some relationships that only have one element and are set as dict.
+                    if isinstance(data, dict):  # Manage some relationships that only have one element and are set as dict.
                         # instead of having [{'type': 'sequenceState', 'id': 1}] we have {'type': 'sequenceState', 'id': 1}
                         data = [data]
 
@@ -118,31 +103,58 @@ class OutreachStream(HttpStream, ABC):
 
 
 # Basic incremental stream
-class IncrementalOutreachStream(OutreachStream, ABC):
+class IncrementalOutreachStream(OutreachStream, IncrementalMixin):
+    _cursor_value: Optional[Any] = None
+
     @property
     def cursor_field(self) -> str:
         return "updatedAt"
 
-    def get_updated_state(
+    @property
+    def state(self) -> Mapping[str, Any]:
+        state = {self.cursor_field: self._cursor_value}
+        # Really just a place to handle cycling refresh tokens that has access to the state.
+        if self.authenticator.cycling_refresh_token is not None:
+            state["refresh_token"] = self.authenticator.cycling_refresh_token
+
+        return state
+
+    @state.setter
+    def state(self, value: Mapping[str, Any]):
+        self._cursor_value = value[self.cursor_field]
+
+    def filter_records_newer_than_state(
         self,
-        current_stream_state: MutableMapping[str, Any],
-        latest_record: Mapping[str, Any],
-    ) -> Mapping[str, Any]:
-        current_stream_state = current_stream_state or {}
+        stream_state: Mapping[str, Any] = None,
+        records_slice: Mapping[str, Any] = None,
+    ) -> Iterable:
+        if self._cursor_value is not None and records_slice is not None:
+            for record in records_slice:
+                if record[self.cursor_field] >= self._cursor_value:
+                    yield record
+        elif records_slice is not None:
+            yield from records_slice
 
-        current_stream_state_date = current_stream_state.get(
-            "updatedAt", self.start_date
-        )
-        latest_record_date = latest_record.get("attributes", {}).get(
-            "updatedAt", self.start_date
-        )
-
-        return {"updatedAt": max(current_stream_state_date, latest_record_date)}
+    def read_records(
+        self,
+        sync_mode: SyncMode,
+        cursor_field: List[str] = None,
+        stream_slice: Mapping[str, Any] = None,
+        stream_state: Mapping[str, Any] = None,
+    ) -> Iterable[Mapping[str, Any]]:
+        records = super().read_records(sync_mode=sync_mode, cursor_field=cursor_field, stream_slice=stream_slice, stream_state=stream_state)
+        for record in records:
+            self._cursor_value = (
+                max(record.get(self.cursor_field, self.start_date), self._cursor_value)
+                if self._cursor_value is not None
+                else record.get(self.cursor_field, self.start_date)
+            )
+            yield record
 
     def request_params(
         self,
         stream_state: Mapping[str, Any],
-        stream_slice: Mapping[str, any] = None,
+        stream_slice: Mapping[str, Any] = None,
         next_page_token: Mapping[str, Any] = None,
     ) -> MutableMapping[str, Any]:
         params = super().request_params(
@@ -150,9 +162,9 @@ class IncrementalOutreachStream(OutreachStream, ABC):
             stream_slice=stream_slice,
             next_page_token=next_page_token,
         )
-        params["sort"] = "updatedAt"
-        if "updatedAt" in stream_state:
-            params["filter[updatedAt]"] = stream_state["updatedAt"] + "..inf"
+        params["sort"] = self.cursor_field
+        if self.cursor_field in stream_state:
+            params["filter[updatedAt]"] = stream_state[self.cursor_field] + "..inf"
         return params
 
 
@@ -190,30 +202,57 @@ class SequenceStates(IncrementalOutreachStream):
 
 # CreatedAt incremental stream
 class CreatedAtIncrementalOutreachStream(OutreachStream, ABC):
+    _cursor_value: Optional[Any] = None
+
     @property
     def cursor_field(self) -> str:
         return "createdAt"
 
-    def get_updated_state(
+    @property
+    def state(self) -> Mapping[str, Any]:
+        state = {self.cursor_field: self._cursor_value}
+        # Really just a place to handle cycling refresh tokens that has access to the state.
+        if self.authenticator.cycling_refresh_token is not None:
+            state["refresh_token"] = self.authenticator.cycling_refresh_token
+
+        return state
+
+    @state.setter
+    def state(self, value: Mapping[str, Any]):
+        self._cursor_value = value[self.cursor_field]
+
+    def filter_records_newer_than_state(
         self,
-        current_stream_state: MutableMapping[str, Any],
-        latest_record: Mapping[str, Any],
-    ) -> Mapping[str, Any]:
-        current_stream_state = current_stream_state or {}
+        stream_state: Mapping[str, Any] = None,
+        records_slice: Mapping[str, Any] = None,
+    ) -> Iterable:
+        if self._cursor_value is not None and records_slice is not None:
+            for record in records_slice:
+                if record[self.cursor_field] >= self._cursor_value:
+                    yield record
+        elif records_slice is not None:
+            yield from records_slice
 
-        current_stream_state_date = current_stream_state.get(
-            "createdAt", self.start_date
-        )
-        latest_record_date = latest_record.get("attributes", {}).get(
-            "createdAt", self.start_date
-        )
-
-        return {"createdAt": max(current_stream_state_date, latest_record_date)}
+    def read_records(
+        self,
+        sync_mode: SyncMode,
+        cursor_field: List[str] = None,
+        stream_slice: Mapping[str, Any] = None,
+        stream_state: Mapping[str, Any] = None,
+    ) -> Iterable[Mapping[str, Any]]:
+        records = super().read_records(sync_mode=sync_mode, cursor_field=cursor_field, stream_slice=stream_slice, stream_state=stream_state)
+        for record in records:
+            self._cursor_value = (
+                max(record.get(self.cursor_field, self.start_date), self._cursor_value)
+                if self._cursor_value is not None
+                else record.get(self.cursor_field, self.start_date)
+            )
+            yield record
 
     def request_params(
         self,
         stream_state: Mapping[str, Any],
-        stream_slice: Mapping[str, any] = None,
+        stream_slice: Mapping[str, Any] = None,
         next_page_token: Mapping[str, Any] = None,
     ) -> MutableMapping[str, Any]:
         params = super().request_params(
@@ -221,9 +260,9 @@ class CreatedAtIncrementalOutreachStream(OutreachStream, ABC):
             stream_slice=stream_slice,
             next_page_token=next_page_token,
         )
-        params["sort"] = "createdAt"
-        if "createdAt" in stream_state:
-            params["filter[createdAt]"] = stream_state["createdAt"] + "..inf"
+        params["sort"] = self.cursor_field
+        if self.cursor_field in stream_state:
+            params["filter[createdAt]"] = stream_state[self.cursor_field] + "..inf"
         return params
 
 
@@ -241,6 +280,13 @@ class Events(CreatedAtIncrementalOutreachStream):
 
 # Dependent stream
 class DependentOutreachStream(OutreachStream, ABC):
+    """
+    Makes requests to a get endpoint which returns single objects based on the ids from a dependent stream where multiple ids are retrieved.
+
+    Note: This is a workaround for a bug where the templates endpoint doesn't return all of the sequenceTemplates' templates. This will retrieve all
+    templates that are from SequenceTemplates.
+    """
+
     def __init__(
         self,
         **kwargs,
@@ -261,17 +307,12 @@ class DependentOutreachStream(OutreachStream, ABC):
             response = self._send(request, {})
             self.dependent_api_response_json = response.json()
             ids = map(
-                lambda record: record["relationships"][self.relationship_object_name][
-                    "data"
-                ]["id"],
+                lambda record: record["relationships"][self.relationship_object_name]["data"]["id"],
                 self.dependent_api_response_json["data"],
             )
             self.remaining_ids = list(filter(lambda id: id is not None, ids))
 
-        while (
-            len(self.remaining_ids) < 1
-            and self.dependent_api_response_json.get("links").get("next") is not None
-        ):
+        while len(self.remaining_ids) < 1 and self.dependent_api_response_json.get("links").get("next") is not None:
             url = self.dependent_api_response_json.get("links").get("next")
             params = parse.parse_qs(parse.urlparse(url).query)
             if not params or "page[after]" not in params:
@@ -287,16 +328,12 @@ class DependentOutreachStream(OutreachStream, ABC):
             response = self._send(request, {})
             self.dependent_api_response_json = response.json()
             ids = map(
-                lambda record: record["relationships"][self.relationship_object_name][
-                    "id"
-                ],
+                lambda record: record["relationships"][self.relationship_object_name]["id"],
                 self.dependent_api_response_json["data"],
             )
             self.remaining_ids = list(filter(lambda id: id is not None, ids))
 
-    def next_page_token(
-        self, response: requests.Response
-    ) -> Optional[Mapping[str, Any]]:
+    def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
         """
         Returns the token for the next page as per https://api.outreach.io/api/v2/docs#pagination.
         It uses cursor-based pagination, by sending the 'page[size]' and 'page[after]' parameters.
@@ -334,9 +371,7 @@ class DependentOutreachStream(OutreachStream, ABC):
 
         return f"{_URL_BASE}/{self.object_name}/{next_id}"
 
-    def parse_response(
-        self, response: requests.Response, **kwargs
-    ) -> Iterable[Mapping]:
+    def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
         data = response.json().get("data")
         if not data:
             return
@@ -344,14 +379,10 @@ class DependentOutreachStream(OutreachStream, ABC):
         relationships: Dict[str, List[int]] = dict()
         for r_type, relations in data.get("relationships").items():
             relationships[f"{r_type}"] = []
-            if relations.get(
-                "data"
-            ):  # Manage None and pass empty data. Some relationships only have links we do not handle these.
+            if relations.get("data"):  # Manage None and pass empty data. Some relationships only have links we do not handle these.
                 relation_data = relations.get("data", [])
 
-                if isinstance(
-                    relation_data, dict
-                ):  # Manage some relationships that only have one element and are set as dict.
+                if isinstance(relation_data, dict):  # Manage some relationships that only have one element and are set as dict.
                     # instead of having [{'type': 'sequenceState', 'id': 1}] we have {'type': 'sequenceState', 'id': 1}
                     relation_data = [relation_data]
 
@@ -447,9 +478,7 @@ class SourceOutreach(AbstractSource):
     def check_connection(self, logger, config) -> Tuple[bool, Any]:
         try:
             access_token, _ = self._create_authenticator(config).refresh_access_token()
-            response = requests.get(
-                _URL_BASE, headers={"Authorization": f"Bearer {access_token}"}
-            )
+            response = requests.get(_URL_BASE, headers={"Authorization": f"Bearer {access_token}"})
             response.raise_for_status()
             return True, None
         except Exception as e:
