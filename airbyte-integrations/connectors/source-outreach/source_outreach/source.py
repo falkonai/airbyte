@@ -314,9 +314,6 @@ class DependentOutreachStream(OutreachStream, ABC):
 
         while len(self.remaining_ids) < 1 and self.dependent_api_response_json.get("links").get("next") is not None:
             url = self.dependent_api_response_json.get("links").get("next")
-            params = parse.parse_qs(parse.urlparse(url).query)
-            if not params or "page[after]" not in params:
-                return
 
             request = self._session.prepare_request(
                 requests.Request(
@@ -328,7 +325,7 @@ class DependentOutreachStream(OutreachStream, ABC):
             response = self._send(request, {})
             self.dependent_api_response_json = response.json()
             ids = map(
-                lambda record: record["relationships"][self.relationship_object_name]["id"],
+                lambda record: record["relationships"][self.relationship_object_name]["data"]["id"],
                 self.dependent_api_response_json["data"],
             )
             self.remaining_ids = list(filter(lambda id: id is not None, ids))
@@ -342,6 +339,7 @@ class DependentOutreachStream(OutreachStream, ABC):
         value = self.api_counter.value()
         if value >= max_api_requests:
             return None
+
         try:
             self._fill_out_remaining_ids()
             if len(self.remaining_ids) < 1:
