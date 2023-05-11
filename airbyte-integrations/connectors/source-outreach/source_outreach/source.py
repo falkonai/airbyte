@@ -41,12 +41,16 @@ class OutreachStream(HttpStream, ABC):
         self.config = config
         super().__init__(authenticator=authenticator, **kwargs)
 
-    def _send_request(self, request: requests.PreparedRequest, request_kwargs: Mapping[str, Any]) -> requests.Response:
+    def _send_request(
+        self, request: requests.PreparedRequest, request_kwargs: Mapping[str, Any]
+    ) -> requests.Response:
         ret = super()._send_request(request=request, request_kwargs=request_kwargs)
         self.api_counter.increment()
         return ret
 
-    def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
+    def next_page_token(
+        self, response: requests.Response
+    ) -> Optional[Mapping[str, Any]]:
         """
         Returns the token for the next page as per https://api.outreach.io/api/v2/docs#pagination.
         It uses cursor-based pagination, by sending the 'page[size]' and 'page[after]' parameters.
@@ -74,12 +78,17 @@ class OutreachStream(HttpStream, ABC):
         if next_page_token and "after" in next_page_token:
             params["page[after]"] = next_page_token["after"]
 
-        if "refresh_token" in stream_state and self.authenticator.cycling_refresh_token is None:
+        if (
+            "refresh_token" in stream_state
+            and self.authenticator.cycling_refresh_token is None
+        ):
             self.authenticator.refresh_token = stream_state["refresh_token"]
 
         return params
 
-    def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
+    def parse_response(
+        self, response: requests.Response, **kwargs
+    ) -> Iterable[Mapping]:
         data = response.json().get("data")
         if not data:
             return
@@ -87,10 +96,14 @@ class OutreachStream(HttpStream, ABC):
             relationships: Dict[str, List[int]] = dict()
             for r_type, relations in element.get("relationships").items():
                 relationships[f"{r_type}"] = []
-                if relations.get("data"):  # Manage None and pass empty data. Some relationships only have links we do not handle these.
+                if relations.get(
+                    "data"
+                ):  # Manage None and pass empty data. Some relationships only have links we do not handle these.
                     data = relations.get("data", [])
 
-                    if isinstance(data, dict):  # Manage some relationships that only have one element and are set as dict.
+                    if isinstance(
+                        data, dict
+                    ):  # Manage some relationships that only have one element and are set as dict.
                         # instead of having [{'type': 'sequenceState', 'id': 1}] we have {'type': 'sequenceState', 'id': 1}
                         data = [data]
 
@@ -142,7 +155,12 @@ class IncrementalOutreachStream(OutreachStream, IncrementalMixin):
         stream_slice: Mapping[str, Any] = None,
         stream_state: Mapping[str, Any] = None,
     ) -> Iterable[Mapping[str, Any]]:
-        records = super().read_records(sync_mode=sync_mode, cursor_field=cursor_field, stream_slice=stream_slice, stream_state=stream_state)
+        records = super().read_records(
+            sync_mode=sync_mode,
+            cursor_field=cursor_field,
+            stream_slice=stream_slice,
+            stream_state=stream_state,
+        )
         for record in records:
             self._cursor_value = (
                 max(record.get(self.cursor_field, self.start_date), self._cursor_value)
@@ -240,7 +258,12 @@ class CreatedAtIncrementalOutreachStream(OutreachStream, ABC):
         stream_slice: Mapping[str, Any] = None,
         stream_state: Mapping[str, Any] = None,
     ) -> Iterable[Mapping[str, Any]]:
-        records = super().read_records(sync_mode=sync_mode, cursor_field=cursor_field, stream_slice=stream_slice, stream_state=stream_state)
+        records = super().read_records(
+            sync_mode=sync_mode,
+            cursor_field=cursor_field,
+            stream_slice=stream_slice,
+            stream_state=stream_state,
+        )
         for record in records:
             self._cursor_value = (
                 max(record.get(self.cursor_field, self.start_date), self._cursor_value)
@@ -302,17 +325,23 @@ class DependentOutreachStream(OutreachStream, ABC):
                     method="GET",
                     url=urljoin(_URL_BASE, self.dependent_object_name),
                     headers=self.authenticator.get_auth_header(),
+                    params={"page[size]": self.page_size, "count": "false"},
                 )
             )
             response = self._send(request, {})
             self.dependent_api_response_json = response.json()
             ids = map(
-                lambda record: record["relationships"][self.relationship_object_name]["data"]["id"],
+                lambda record: record["relationships"][self.relationship_object_name][
+                    "data"
+                ]["id"],
                 self.dependent_api_response_json["data"],
             )
             self.remaining_ids = list(filter(lambda id: id is not None, ids))
 
-        while len(self.remaining_ids) < 1 and self.dependent_api_response_json.get("links").get("next") is not None:
+        while (
+            len(self.remaining_ids) < 1
+            and self.dependent_api_response_json.get("links").get("next") is not None
+        ):
             url = self.dependent_api_response_json.get("links").get("next")
 
             request = self._session.prepare_request(
@@ -320,17 +349,22 @@ class DependentOutreachStream(OutreachStream, ABC):
                     method="GET",
                     url=url,
                     headers=self.authenticator.get_auth_header(),
+                    params={"page[size]": self.page_size, "count": "false"},
                 )
             )
             response = self._send(request, {})
             self.dependent_api_response_json = response.json()
             ids = map(
-                lambda record: record["relationships"][self.relationship_object_name]["data"]["id"],
+                lambda record: record["relationships"][self.relationship_object_name][
+                    "data"
+                ]["id"],
                 self.dependent_api_response_json["data"],
             )
             self.remaining_ids = list(filter(lambda id: id is not None, ids))
 
-    def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
+    def next_page_token(
+        self, response: requests.Response
+    ) -> Optional[Mapping[str, Any]]:
         """
         Returns the token for the next page as per https://api.outreach.io/api/v2/docs#pagination.
         It uses cursor-based pagination, by sending the 'page[size]' and 'page[after]' parameters.
@@ -369,7 +403,9 @@ class DependentOutreachStream(OutreachStream, ABC):
 
         return f"{_URL_BASE}/{self.object_name}/{next_id}"
 
-    def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
+    def parse_response(
+        self, response: requests.Response, **kwargs
+    ) -> Iterable[Mapping]:
         data = response.json().get("data")
         if not data:
             return
@@ -377,10 +413,14 @@ class DependentOutreachStream(OutreachStream, ABC):
         relationships: Dict[str, List[int]] = dict()
         for r_type, relations in data.get("relationships").items():
             relationships[f"{r_type}"] = []
-            if relations.get("data"):  # Manage None and pass empty data. Some relationships only have links we do not handle these.
+            if relations.get(
+                "data"
+            ):  # Manage None and pass empty data. Some relationships only have links we do not handle these.
                 relation_data = relations.get("data", [])
 
-                if isinstance(relation_data, dict):  # Manage some relationships that only have one element and are set as dict.
+                if isinstance(
+                    relation_data, dict
+                ):  # Manage some relationships that only have one element and are set as dict.
                     # instead of having [{'type': 'sequenceState', 'id': 1}] we have {'type': 'sequenceState', 'id': 1}
                     relation_data = [relation_data]
 
@@ -476,7 +516,9 @@ class SourceOutreach(AbstractSource):
     def check_connection(self, logger, config) -> Tuple[bool, Any]:
         try:
             access_token, _ = self._create_authenticator(config).refresh_access_token()
-            response = requests.get(_URL_BASE, headers={"Authorization": f"Bearer {access_token}"})
+            response = requests.get(
+                _URL_BASE, headers={"Authorization": f"Bearer {access_token}"}
+            )
             response.raise_for_status()
             return True, None
         except Exception as e:
