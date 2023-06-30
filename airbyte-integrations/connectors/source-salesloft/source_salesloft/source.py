@@ -122,6 +122,14 @@ class Calls(IncrementalSalesloftStream):
         return "activities/calls"
 
 
+class CallDataRecords(IncrementalSalesloftStream):
+    primary_key = "id"
+    cursor_field = "updated_at"
+
+    def path(self, **kwargs) -> str:
+        return "call_data_records"
+
+
 class Accounts(IncrementalSalesloftStream):
     primary_key = "id"
     cursor_field = "updated_at"
@@ -288,6 +296,7 @@ class SourceSalesloft(AbstractSource):
             Users(authenticator=auth, **config),
             Emails(authenticator=auth, **config),
             Calls(authenticator=auth, **config),
+            CallDataRecords(authenticator=auth, **config),
             AccountStages(authenticator=auth, **config),
             AccountTiers(authenticator=auth, **config),
             Accounts(authenticator=auth, **config),
