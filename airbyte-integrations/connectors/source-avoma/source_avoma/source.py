@@ -24,6 +24,7 @@ _URL_BASE = "https://api.avoma.com/v1/"
 # Basic full refresh stream
 class AvomaStream(HttpStream, ABC):
 
+    has_shown_total_count = False
     url_base = _URL_BASE
     primary_key = "uuid"
     page_size = 200
@@ -55,7 +56,7 @@ class AvomaStream(HttpStream, ABC):
             params = parse.parse_qs(parse.urlparse(next_page_url).query)
             if not params or "page" not in params:
                 return {}
-            return {"page": params["page"]}
+            return {"page": params["page"][0]}
         except Exception as e:
             raise KeyError(f"error parsing next_page token: {e}")
 
@@ -72,7 +73,14 @@ class AvomaStream(HttpStream, ABC):
         return params
 
     def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
-        results = response.json().get("results")
+        body = response.json()
+
+        count = body.get("count")
+        if count and not self.has_shown_total_count:
+            print(f'Total count of "{self.path()}": {count}')
+            self.has_shown_total_count = True
+
+        results = body.get("results")
         if not results:
             return
         for element in results:
@@ -241,9 +249,7 @@ class DependentAvomaStream(AvomaStream, ABC):
         else:
             next_id = next_page_token["id"]
 
-        path = urljoin(_URL_BASE, f"{self.object_name}/{next_id}", allow_fragments=True)
-        print(f"path: {path}")
-        return path
+        return urljoin(_URL_BASE, f"{self.object_name}/{next_id}/", allow_fragments=True)
 
     def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
         data = response.json()
@@ -284,7 +290,7 @@ class SourceAvoma(AbstractSource):
     def check_connection(self, logger, config) -> Tuple[bool, Any]:
         try:
             headers = self._create_authenticator(config).get_auth_header()
-            response = requests.get(urljoin(_URL_BASE, "users"), headers=headers)
+            response = requests.get(urljoin(_URL_BASE, "users/"), headers=headers)
             response.raise_for_status()
             return True, None
         except Exception as e:
