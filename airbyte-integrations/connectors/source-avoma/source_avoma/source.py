@@ -51,6 +51,11 @@ class AvomaStream(HttpStream, ABC):
         Returns the token for the next page as per https://api.avoma.io/api/v2/docs#pagination.
         It uses cursor-based pagination, by sending the 'page[size]' and 'page[after]' parameters.
         """
+        max_api_requests = self.config["max_api_requests"] or 1000
+        value = self.api_counter.value()
+        if value >= max_api_requests:
+            return None
+
         try:
             next_page_url = response.json().get("next")
             params = parse.parse_qs(parse.urlparse(next_page_url).query)
@@ -222,6 +227,11 @@ class DependentAvomaStream(AvomaStream, ABC):
         Returns the token for the next page based on endpoints from avoma.
         It uses cursor-based pagination, by sending a 'page' parameter for the next page.
         """
+        max_api_requests = self.config["max_api_requests"] or 1000
+        value = self.api_counter.value()
+        if value >= max_api_requests:
+            return None
+
         try:
             self._fill_out_remaining_ids()
             if len(self.remaining_ids) < 1:
