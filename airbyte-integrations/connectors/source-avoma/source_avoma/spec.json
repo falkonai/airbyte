@@ -7,7 +7,9 @@
     "required": [
       "client_id",
       "client_secret",
-      "bearer_token"
+      "bearer_token",
+      "requests_per_rate_limit",
+      "seconds_per_rate_limit"
     ],
     "additionalProperties": false,
     "properties": {
@@ -40,6 +42,18 @@
         "type": "integer",
         "default": "1000",
         "examples": ["1000"]
+      },
+      "requests_per_rate_limit": {
+        "description": "The number of api requests in the rate limit. Use in combination with seconds_per_rate_limit to make sure to not surpass rate.",
+        "type": "integer",
+        "default": "5000",
+        "examples": ["5000"]
+      },
+      "seconds_per_rate_limit": {
+        "description": "The number of seconds in the rate limit. Use in combination with requests_per_rate_limit to make sure to not surpass rate.",
+        "type": "integer",
+        "default": "5000",
+        "examples": ["5000"]
       }
     }
   }

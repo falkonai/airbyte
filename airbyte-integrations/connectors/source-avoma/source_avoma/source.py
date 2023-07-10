@@ -16,14 +16,14 @@ from airbyte_cdk.sources.streams.http import HttpStream
 from airbyte_cdk.sources.streams.http.auth.core import HttpAuthenticator
 from airbyte_cdk.sources.streams.http.auth.token import TokenAuthenticator
 
-from .thread_safe_counter import Counter
+from .thread_safe_rate_limiter import RequestRateLimiter
+
 
 _URL_BASE = "https://api.avoma.com/v1/"
 
 
 # Basic full refresh stream
 class AvomaStream(HttpStream, ABC):
-
     has_shown_total_count = False
     url_base = _URL_BASE
     primary_key = "uuid"
@@ -32,18 +32,18 @@ class AvomaStream(HttpStream, ABC):
     def __init__(
         self,
         authenticator: HttpAuthenticator,
-        api_counter: Counter,
+        rate_limiter: RequestRateLimiter,
         config: Dict,
         **kwargs,
     ):
-        self.api_counter = api_counter
+        self.rate_limiter = rate_limiter
         self.start_date = config["start_date"]
         self.config = config
         super().__init__(authenticator=authenticator, **kwargs)
 
     def _send_request(self, request: requests.PreparedRequest, request_kwargs: Mapping[str, Any]) -> requests.Response:
         ret = super()._send_request(request=request, request_kwargs=request_kwargs)
-        self.api_counter.increment()
+        self.rate_limiter.request_made_successfully()
         return ret
 
     def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
@@ -51,10 +51,7 @@ class AvomaStream(HttpStream, ABC):
         Returns the token for the next page as per https://api.avoma.io/api/v2/docs#pagination.
         It uses cursor-based pagination, by sending the 'page[size]' and 'page[after]' parameters.
         """
-        max_api_requests = self.config["max_api_requests"] or 1000
-        value = self.api_counter.value()
-        if value >= max_api_requests:
-            return None
+        self.rate_limiter.wait_if_needed()
 
         try:
             next_page_url = response.json().get("next")
@@ -227,10 +224,7 @@ class DependentAvomaStream(AvomaStream, ABC):
         Returns the token for the next page based on endpoints from avoma.
         It uses cursor-based pagination, by sending a 'page' parameter for the next page.
         """
-        max_api_requests = self.config["max_api_requests"] or 1000
-        value = self.api_counter.value()
-        if value >= max_api_requests:
-            return None
+        self.rate_limiter.wait_if_needed()
 
         try:
             self._fill_out_remaining_ids()
@@ -291,9 +285,6 @@ class Transcriptions(DependentAvomaStream):
 
 # Source
 class SourceAvoma(AbstractSource):
-    def __init__(self):
-        self._api_counter = Counter()
-
     def _create_authenticator(self, config) -> TokenAuthenticator:
         return TokenAuthenticator(token=config["bearer_token"])
 
@@ -308,11 +299,14 @@ class SourceAvoma(AbstractSource):
             return False, e
 
     def streams(self, config: Mapping[str, Any]) -> List[Stream]:
+        self._rate_limiter = RequestRateLimiter(
+            requests_per_rate_limit=config["requests_per_rate_limit"], seconds_per_rate_limit=config["seconds_per_rate_limit"]
+        )
         auth = self._create_authenticator(config)
         args = {
             "authenticator": auth,
             "config": config,
-            "api_counter": self._api_counter,
+            "rate_limiter": self._rate_limiter,
         }
         return [
             Meetings(**args),
