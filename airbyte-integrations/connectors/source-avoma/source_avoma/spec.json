@@ -37,23 +37,17 @@
         "examples": ["2020-11-16T00:00:00Z"],
         "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
       },
-      "max_api_requests": {
-        "description": "The maximum number of api requests per airbyte run. Use in combination with frequency to make sure to not surpass daily limit (aprox. 100,000 requests per day, and 10,000 per hour).",
-        "type": "integer",
-        "default": "1000",
-        "examples": ["1000"]
-      },
       "requests_per_rate_limit": {
-        "description": "The number of api requests in the rate limit. Use in combination with seconds_per_rate_limit to make sure to not surpass rate.",
+        "description": "The number of api requests in the rate limit. Use in combination with seconds_per_rate_limit to make sure to not surpass the rate limit.",
         "type": "integer",
         "default": "5000",
         "examples": ["5000"]
       },
       "seconds_per_rate_limit": {
-        "description": "The number of seconds in the rate limit. Use in combination with requests_per_rate_limit to make sure to not surpass rate.",
+        "description": "The number of seconds in the rate limit. Use in combination with requests_per_rate_limit to make sure to not surpass the rate limit.",
         "type": "integer",
-        "default": "5000",
-        "examples": ["5000"]
+        "default": "300",
+        "examples": ["300"]
       }
     }
   }
